@@ -42,6 +42,10 @@ android {
         targetSdk = 34  // Set to the latest version, or as required
         versionCode = 1  // You can set this to 1 or increase as needed
         versionName = "1.0"
+        multiDexEnabled true
+    }
+    dependencies{
+        implementation 'androidx.multidex:multidex:2.0.1'
     }
 
     buildTypes {

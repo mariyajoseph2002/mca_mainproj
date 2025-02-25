@@ -39,9 +39,8 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   speech_to_text: ^6.1.1
-  tflite_flutter: ^0.9.0
-  tflite_flutter_helper: ^0.2.2
-
+  tflite_flutter: ^0.11.0
+ 
 
 dev_dependencies:
   flutter_test:
@@ -60,14 +59,18 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+
+    - assets/emotion_model.tflite
 
   # To add assets to your application, add an assets section, like this:
-  assets:
-      - assets/emotion_model.tflite
+  #assets:
+      #- emotion_model.tflite
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
