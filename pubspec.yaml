@@ -36,10 +36,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   firebase_core: ^3.6.0
+  firebase_storage: ^12.4.4
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   speech_to_text: ^6.1.1
   tflite_flutter: ^0.11.0
+  permission_handler: ^11.0.1
+  google_ml_kit: ^0.19.0
+  image_picker: ^1.1.2
+  path_provider: ^2.1.5
  
 
 dev_dependencies:
@@ -66,7 +71,8 @@ flutter:
   uses-material-design: true
   assets:
 
-    - assets/emotion_model.tflite
+    - assets/emotionn_model.tflite
+    - assets/tokenizer.json
 
   # To add assets to your application, add an assets section, like this:
   #assets:

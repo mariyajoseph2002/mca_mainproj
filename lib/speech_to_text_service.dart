@@ -4,20 +4,19 @@ class SpeechToTextService {
   final stt.SpeechToText _speech = stt.SpeechToText();
 
   Future<String> listen() async {
-    bool available = await _speech.initialize();
-    if (!available) return "Speech recognition not available";
+    if (!await _speech.initialize()) {
+      return "Speech recognition not available";
+    }
 
     String recognizedText = "";
-    await _speech.listen(
-      onResult: (result) {
-        recognizedText = result.recognizedWords;
-      },
-    );
+    await _speech.listen(onResult: (result) {
+      recognizedText = result.recognizedWords;
+    });
 
+    await Future.delayed(Duration(seconds: 2)); // Wait for recognition
+    await _speech.stop();
     return recognizedText;
   }
 
-  void stop() {
-    _speech.stop();
-  }
+  void stop() => _speech.stop();
 }

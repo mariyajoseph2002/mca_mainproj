@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'login.dart';
 import 'daily_journals.dart';
 import 'emotion_finder.dart'; // Updated import
-import 'medical_records.dart';
+import 'medical_records_screen.dart';
 
 class Customer extends StatelessWidget {
   const Customer({super.key});
@@ -63,7 +63,7 @@ class Customer extends StatelessWidget {
             leading: const Icon(Icons.folder),
             title: const Text("Medical Records"),
             onTap: () {
-              navigateToPage(context, const MedicalRecordsPage());
+              navigateToPage(context, MedicalRecordsScreen());
             },
           ),
           ListTile(
