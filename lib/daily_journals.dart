@@ -11,7 +11,7 @@ class DailyJournalsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Daily Journals"),
-        backgroundColor: const Color.fromARGB(255, 243, 173, 103),
+        backgroundColor: Color.fromARGB(255, 238, 160, 233),
       ),
       drawer: customerWidget.buildDrawer(context),
       body: const Center(

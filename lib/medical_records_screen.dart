@@ -79,7 +79,7 @@ Future<List<Map<String, dynamic>>> fetchMedicalRecords() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Medical Records"), backgroundColor: const Color.fromARGB(255, 243, 173, 103)),
+      appBar: AppBar(title: Text("Medical Records"), backgroundColor: Color.fromARGB(255, 238, 160, 233),),
       drawer: customerWidget.buildDrawer(context),
       body: Column(
         children: [

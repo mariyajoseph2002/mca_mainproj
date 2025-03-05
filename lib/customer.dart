@@ -83,7 +83,7 @@ class Customer extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Customer"),
-        backgroundColor: const Color.fromARGB(255, 243, 173, 103),
+        backgroundColor: Color.fromARGB(255, 238, 160, 233),
       ),
       drawer: buildDrawer(context),
       body: const Center(
