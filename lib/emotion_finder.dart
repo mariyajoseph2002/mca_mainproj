@@ -6,10 +6,7 @@ import 'dart:typed_data';
 import 'dart:convert'; // ✅ Required for JSON decoding
 import 'dart:math';
 import 'package:permission_handler/permission_handler.dart';
-
-
-
-
+import 'customer.dart';
 
 class EmotionFinderScreen extends StatefulWidget {
   @override
@@ -266,6 +263,8 @@ String _getEmotionLabel(int index) {
 
         ],
       ),
+      
+      
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -292,6 +291,7 @@ String _getEmotionLabel(int index) {
           ],
         ),
       ),
+      
     );
   }
 }
