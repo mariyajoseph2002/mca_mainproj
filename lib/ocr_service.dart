@@ -397,7 +397,8 @@ class OCRService {
   // 🔹 Schedule Medicine Reminders
   for (var med in medications) {
     if (med['dosage']!.isNotEmpty) {
-      DateTime reminderTime = DateTime.now().add(Duration(hours: 1)); // Example: Notify in 1 hour
+      DateTime reminderTime = DateTime.now().add(Duration(seconds: 5)); 
+      print("⏰ Reminder Set: Take ${med['name']} - ${med['dosage']} for ${med['duration']} at $reminderTime");// Example: Notify in 1 hour
       NotificationService.scheduleNotification(
         medications.indexOf(med),
         "Time to take ${med['name']}",

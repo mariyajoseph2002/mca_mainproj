@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:healpal/goal_list_screen.dart';
 import 'login.dart';
 import 'daily_journals.dart';
 import 'emotion_finder.dart'; // Updated import
 import 'medical_records_screen.dart';
+
 
 class Customer extends StatelessWidget {
   const Customer({super.key});
@@ -32,7 +34,7 @@ class Customer extends StatelessWidget {
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 243, 173, 103),
+              color: Color.fromARGB(255, 238, 160, 233),
             ),
             child: const Center(
               child: Text(
@@ -50,6 +52,13 @@ class Customer extends StatelessWidget {
             title: const Text("Daily Journals"),
             onTap: () {
               navigateToPage(context, const DailyJournalsPage());
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.trending_up),
+            title: const Text("Goal"),
+            onTap: () {
+              navigateToPage(context,  GoalListScreen());
             },
           ),
           ListTile(

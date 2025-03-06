@@ -38,6 +38,7 @@ Future<void> main() async {
   await Firebase.initializeApp();
   requestNotificationPermission();
   initializeNotifications();
+  WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
   runApp(const MyApp());
 }
