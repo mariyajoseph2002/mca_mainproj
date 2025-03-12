@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'weekly_completion_screen.dart';
+import 'goal_recommendation_service.dart';
 
 class GoalDetailScreen extends StatefulWidget {
-  final String goalId; // Firestore document ID
+  final String goalId;
   final Map<String, dynamic> goal;
 
   GoalDetailScreen({required this.goalId, required this.goal});
@@ -22,21 +24,34 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
   @override
   void initState() {
     super.initState();
+    fetchRecommendation();
     progress = (widget.goal['progress'] ?? 0).toDouble();
     createdAt = widget.goal['createdAt']?.toDate() ?? DateTime.now();
     dueDate = widget.goal['dueDate']?.toDate() ?? DateTime.now();
-    lastUpdatedDate = widget.goal['lastUpdated']?.toDate(); // Track last update date
+    lastUpdatedDate = widget.goal['lastUpdated']?.toDate();
 
     int totalDays = dueDate.difference(createdAt).inDays;
     if (totalDays > 0) {
-      dailyIncrement = 100 / totalDays; // Progress increase per day
+      dailyIncrement = 100 / totalDays;
     }
   }
+  String recommendationText = "Fetching recommendation...";
+
+Future<void> fetchRecommendation() async {
+  String recommendation = await GoalRecommendationService.getAdaptiveRecommendation(widget.goalId);
+  setState(() {
+    recommendationText = recommendation;
+  });
+}
+
+
+
 
   Future<void> markStepCompleted() async {
     DateTime today = DateTime.now();
+    String todayFormatted = "${today.year}-${today.month}-${today.day}";
 
-    // Ensure user can only update progress once per day
+    // Prevent multiple updates on the same day
     if (lastUpdatedDate != null &&
         lastUpdatedDate!.year == today.year &&
         lastUpdatedDate!.month == today.month &&
@@ -47,6 +62,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
       return;
     }
 
+    // Check if the due date has passed
     if (today.isAfter(dueDate)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Goal due date has passed! Progress cannot be updated.")),
@@ -56,15 +72,24 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
 
     setState(() {
       progress += dailyIncrement;
-      if (progress > 100) progress = 100; // Cap progress at 100%
-      lastUpdatedDate = today; // Update last completed date
+      if (progress > 100) progress = 100;
+      lastUpdatedDate = today;
     });
 
+    // Update goal progress in Firestore
     await FirebaseFirestore.instance.collection('goals').doc(widget.goalId).update({
       'progress': progress,
-      'lastUpdated': Timestamp.fromDate(today), // Store last updated date
+      'lastUpdated': Timestamp.fromDate(today),
       'updated_at': FieldValue.serverTimestamp(),
     });
+
+    // Add progress entry to progresshistory
+   await FirebaseFirestore.instance
+      .collection('goals')
+      .doc(widget.goalId)
+      .collection('progress_history')
+      .doc(todayFormatted) // Store by date
+      .set({'date': today, 'progress': progress}, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Step marked as completed for today!")),
@@ -103,16 +128,14 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                     ),
                     SizedBox(height: 12),
-                    if (widget.goal['createdAt'] != null)
-                      Text(
-                        "Created: ${createdAt.toLocal()}",
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                    if (widget.goal['dueDate'] != null)
-                      Text(
-                        "Due: ${dueDate.toLocal()}",
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red),
-                      ),
+                    Text(
+                      "Created: ${createdAt.toLocal()}",
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    Text(
+                      "Due: ${dueDate.toLocal()}",
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red),
+                    ),
                     if (lastUpdatedDate != null)
                       Text(
                         "Last Updated: ${lastUpdatedDate!.toLocal()}",
@@ -138,6 +161,22 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
               ),
             ),
             SizedBox(height: 20),
+            Card(
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+  elevation: 4,
+  child: Padding(
+    padding: EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Adaptive Recommendation", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Text(recommendationText, style: TextStyle(fontSize: 16, color: Colors.black54)),
+      ],
+    ),
+  ),
+),
+
 
             // Mark as Completed Button
             Center(
@@ -150,6 +189,30 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                 ),
                 child: Text(
                   "Mark Step as Completed",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+
+            // View Weekly Completion Button
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WeeklyCompletionScreen(goalId: widget.goalId),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: Text(
+                  "View Weekly Completion",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),

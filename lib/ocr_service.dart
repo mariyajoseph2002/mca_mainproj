@@ -389,34 +389,51 @@ class OCRService {
       reminderTime,
     );
   }
+  setReminders(extractedData);
 }
   // 📌 Set Reminders for Medications & Doctor Visits
  void setReminders(Map<String, dynamic> extractedData) {
-  List<Map<String, String>> medications = List<Map<String, String>>.from(extractedData['medications']);
+    List<Map<String, String>> medications = List<Map<String, String>>.from(extractedData['medications']);
 
-  // 🔹 Schedule Medicine Reminders
-  for (var med in medications) {
-    if (med['dosage']!.isNotEmpty) {
-      DateTime reminderTime = DateTime.now().add(Duration(seconds: 5)); 
-      print("⏰ Reminder Set: Take ${med['name']} - ${med['dosage']} for ${med['duration']} at $reminderTime");// Example: Notify in 1 hour
-      NotificationService.scheduleNotification(
-        medications.indexOf(med),
-        "Time to take ${med['name']}",
-        "Dosage: ${med['dosage']}",
-        reminderTime,
-      );
+    // 🔹 Schedule Medicine Reminders
+    for (var med in medications) {
+      if (med['dosage']!.isNotEmpty) {
+        DateTime reminderTime = DateTime.now().add(Duration(seconds: 5)); 
+        print("⏰ Scheduling Reminder: Take ${med['name']} - ${med['dosage']} at $reminderTime"); // Debugging Output
+        NotificationService.scheduleNotification(
+          medications.indexOf(med),
+          "Time to take ${med['name']}",
+          "Dosage: ${med['dosage']}",
+          reminderTime,
+        );
+      }
+    }
+
+    // 🔹 Schedule Follow-Up Reminder
+    if (extractedData['follow_up_date'].isNotEmpty) {
+      try {
+        DateTime followUpReminder = DateTime.parse(extractedData['follow_up_date']);
+        print("📅 Scheduling Follow-Up Reminder for ${extractedData['follow_up_date']}");
+        NotificationService.scheduleNotification(
+          999, // Unique ID for follow-up
+          "Doctor Follow-Up Reminder",
+          "Your appointment is on ${extractedData['follow_up_date']}",
+          followUpReminder,
+        );
+      } catch (e) {
+        print("⚠️ Error parsing follow-up date: ${extractedData['follow_up_date']}");
+      }
     }
   }
 
-  // 🔹 Schedule Follow-Up Reminder
-  if (extractedData['follow_up_date'].isNotEmpty) {
-    DateTime followUpReminder = DateTime.parse(extractedData['follow_up_date']);
+  // 📌 Test Notification Function
+  void sendTestNotification() {
     NotificationService.scheduleNotification(
-      999, // Unique ID for follow-up
-      "Doctor Follow-Up Reminder",
-      "Your appointment is on ${extractedData['follow_up_date']}",
-      followUpReminder,
+      0,
+      "Test Reminder",
+      "This is a test notification",
+      DateTime.now().add(Duration(seconds: 5)),
     );
+    print("✅ Test notification scheduled!");
   }
-}
 }

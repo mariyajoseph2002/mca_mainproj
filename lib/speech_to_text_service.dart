@@ -13,7 +13,7 @@ class SpeechToTextService {
       recognizedText = result.recognizedWords;
     });
 
-    await Future.delayed(Duration(seconds: 2)); // Wait for recognition
+    await Future.delayed(Duration(seconds: 20)); // Wait for recognition
     await _speech.stop();
     return recognizedText;
   }

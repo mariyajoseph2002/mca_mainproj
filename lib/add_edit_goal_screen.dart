@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddEditGoalScreen extends StatefulWidget {
   final String? goalId; // Null if adding a new goal
@@ -27,20 +28,33 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
   }
 
   Future<void> saveGoal() async {
+    // Get the current logged-in user's email
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: No user logged in")),
+      );
+      return;
+    }
+    String userEmail = user.email ?? "";
+
     final goalData = {
-      'title': titleController.text,
-      'description': descriptionController.text,
+      'title': titleController.text.trim(),
+      'description': descriptionController.text.trim(),
       'progress': widget.goalData?['progress'] ?? 0, // Keep progress
-      'createdAt': widget.goalData?['createdAt'] ?? FieldValue.serverTimestamp(), // Set createdAt only if new
+      'createdAt': widget.goalData?['createdAt'] ?? FieldValue.serverTimestamp(), // Only set if new
       'dueDate': selectedDueDate != null ? Timestamp.fromDate(selectedDueDate!) : null,
+      'userEmail': userEmail, // Associate goal with user
     };
 
+    final goalRef = FirebaseFirestore.instance.collection('goals').doc(widget.goalId);
+
     if (widget.goalId == null) {
-      // New goal
+      // New goal - create a new document with an auto-generated ID
       await FirebaseFirestore.instance.collection('goals').add(goalData);
     } else {
       // Update existing goal
-      await FirebaseFirestore.instance.collection('goals').doc(widget.goalId).update(goalData);
+      await goalRef.update(goalData);
     }
 
     Navigator.pop(context);
@@ -49,7 +63,10 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.goalId == null ? "Add Goal" : "Edit Goal")),
+      appBar: AppBar(
+        title: Text(widget.goalId == null ? "Add Goal" : "Edit Goal"),
+        backgroundColor: Color.fromARGB(255, 238, 160, 233),
+      ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
