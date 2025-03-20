@@ -230,11 +230,14 @@ import 'confidence_builder_screen.dart'; // Import new screen
 
 class GoalListScreen extends StatefulWidget {
   @override
+  final Widget drawer;
+  const GoalListScreen({super.key, required this.drawer});
   _GoalListScreenState createState() => _GoalListScreenState();
 }
 
 class _GoalListScreenState extends State<GoalListScreen> {
   final GoalController _goalController = GoalController();
+  
   String? suggestedGoal;
   bool isLoadingAiGoal = false;
 
@@ -277,7 +280,7 @@ class _GoalListScreenState extends State<GoalListScreen> {
           ),
         ],
       ),
-      drawer: customerWidget.buildDrawer(context),
+      drawer: widget.drawer,
       body: SingleChildScrollView(  // Fixes overflow issue
         child: Column(
           children: [
@@ -459,4 +462,3 @@ class _GoalListScreenState extends State<GoalListScreen> {
     );
   }
 }
-

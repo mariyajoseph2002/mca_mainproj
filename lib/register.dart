@@ -295,6 +295,8 @@ class _RegisterState extends State<Register> {
       'city': cityController.text,
       'age': int.parse(ageController.text),
       'phone': phoneController.text,
+      'xp':0,
+      'streak':0
     });
   }
 }

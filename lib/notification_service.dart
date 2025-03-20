@@ -17,15 +17,26 @@ class NotificationService {
         InitializationSettings(android: androidInitSettings);
 
     await flutterLocalNotificationsPlugin.initialize(initSettings);
+
+    // ✅ Request permission for Android 13+
+    final androidPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.requestNotificationsPermission();
   }
 
-  // 🔹 Schedule Notification
+  // 🔹 Schedule Notification (Fixed for v19.0.0)
   static Future<void> scheduleNotification(
       int id, String title, String body, DateTime scheduledTime) async {
+    print("🔹 Scheduling Notification (Original Time): $scheduledTime");
+
+    final tz.TZDateTime localTime = tz.TZDateTime.from(scheduledTime, tz.local);
+    print("⏳ Converted to Local Time Zone: $localTime"); // ✅ Debugging log
+
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'medication_channel', // Unique channel ID
-      'Medication Reminders', // Channel name
-      channelDescription: 'Sends reminders for medication and doctor appointments.', // ✅ Required for Android 13+
+      'medication_channel',
+      'Medication Reminders',
+      channelDescription: 'Sends reminders for medication and doctor appointments.',
       importance: Importance.high,
       priority: Priority.high,
     );
@@ -33,14 +44,14 @@ class NotificationService {
     const NotificationDetails details = NotificationDetails(android: androidDetails);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      id, // Unique ID for each notification
+      id,
       title,
       body,
-      tz.TZDateTime.from(scheduledTime, tz.local), // Convert time to local timezone
+      localTime, // ✅ Use converted local time
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // ✅ Required for accuracy
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // ✅ Required in v19
       matchDateTimeComponents: DateTimeComponents.time, // ✅ Allows daily repeating reminders
     );
+    print("✅ Notification Scheduled at: $localTime");
   }
 }

@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'weekly_completion_screen.dart';
+import 'dart:convert';
 import 'goal_recommendation_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class GoalDetailScreen extends StatefulWidget {
   final String goalId;
@@ -20,11 +25,15 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
   late DateTime dueDate;
   double dailyIncrement = 0.0;
   DateTime? lastUpdatedDate;
+  String recommendationText = "Fetching recommendation...";
+  List<String> goalActivities = [];
+ 
 
   @override
   void initState() {
     super.initState();
     fetchRecommendation();
+    checkAndFetchGoalActivities();
     progress = (widget.goal['progress'] ?? 0).toDouble();
     createdAt = widget.goal['createdAt']?.toDate() ?? DateTime.now();
     dueDate = widget.goal['dueDate']?.toDate() ?? DateTime.now();
@@ -35,7 +44,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
       dailyIncrement = 100 / totalDays;
     }
   }
-  String recommendationText = "Fetching recommendation...";
+  
 
 Future<void> fetchRecommendation() async {
   String recommendation = await GoalRecommendationService.getAdaptiveRecommendation(widget.goalId);
@@ -43,6 +52,80 @@ Future<void> fetchRecommendation() async {
     recommendationText = recommendation;
   });
 }
+
+
+  /// Check Firestore for existing goal activities, use Gemini if not found
+  Future<void> checkAndFetchGoalActivities() async {
+    String category = widget.goal['title'] ;
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('goal_activity').doc(category).get();
+      print("Fetching activities for category: $category");
+print("Firestore snapshot data: ${snapshot.data()}");
+
+      if (snapshot.exists && snapshot['activities'] != null) {
+        List<String> activities = List<String>.from(snapshot['activities']);
+        setState(() {
+          goalActivities = activities;
+        });
+      } else {
+        // If no activities exist, fetch from Gemini API
+        await fetchActivitiesFromGemini(category);
+      }
+    } catch (e) {
+      print("Error fetching goal activities: $e");
+    }
+  }
+
+  /// Fetch suggested activities from Gemini API
+  Future<void> fetchActivitiesFromGemini(String category) async {
+    try {
+      String geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? ''; 
+      final response = await http.post(
+  Uri.parse("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro-002:generateContent?key=$geminiApiKey"),
+  headers: {"Content-Type": "application/json"},
+  body: jsonEncode({
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "Suggest 3 specific activities that can help someone achieve the goal category: $category. Provide the activities in a numbered list."
+          }
+        ]
+      }
+    ]
+  }),
+);
+
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        //String aiResponse = jsonResponse['candidates'][0]['content'];
+        String aiResponse = jsonResponse['candidates'][0]['content']['parts'][0]['text']
+    .replaceAll('*', '') // Remove asterisks
+    .trim(); // Trim extra spaces
+
+
+
+        // Extract activities from response
+        List<String> generatedActivities = aiResponse.split("\n").where((line) => line.isNotEmpty).toList();
+
+        // Store AI-generated activities in Firestore for future use
+        await FirebaseFirestore.instance.collection('goal_activity').doc(category).set({
+          'activities': generatedActivities,
+          'source': 'gemini',
+          'created_at': FieldValue.serverTimestamp(),
+        });
+
+        setState(() {
+          goalActivities = generatedActivities;
+        });
+      } else {
+        print("Error fetching activities from Gemini: ${response.body}");
+      }
+    } catch (e) {
+      print("Exception while calling Gemini API: $e");
+    }
+  }
 
 
 
@@ -141,6 +224,44 @@ Future<void> fetchRecommendation() async {
                         "Last Updated: ${lastUpdatedDate!.toLocal()}",
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green),
                       ),
+                      SizedBox(height: 20),
+if (goalActivities.isNotEmpty) 
+  Card(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    elevation: 4,
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Suggested Activities", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          ...goalActivities.map((activity) => Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child:Row(
+  crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
+  children: [
+    Icon(Icons.check_circle, color: Colors.green, size: 20), // Fixed small size
+    SizedBox(width: 8), // Adds spacing
+    Expanded( // Ensures text wraps and doesn't overflow
+      child: Text(
+        activity, 
+        style: TextStyle(fontSize: 16, color: Colors.black87),
+      ),
+    ),
+  ],
+),
+
+
+         
+          )),
+        ],
+      ),
+    ),
+  ), 
+
+
+
                   ],
                 ),
               ),
@@ -222,4 +343,8 @@ Future<void> fetchRecommendation() async {
       ),
     );
   }
-}
+}  
+
+
+
+

@@ -199,9 +199,15 @@ import 'dart:math';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'customer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class EmotionFinderScreen extends StatefulWidget {
   @override
+  final Widget drawer;
+  const EmotionFinderScreen({super.key, required this.drawer});
   _EmotionFinderScreenState createState() => _EmotionFinderScreenState();
 }
 
@@ -214,6 +220,11 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
   bool _isListening = false;
   String? _predictedEmotion;
   Map<String, dynamic>? _recommendation; // Holds Firestore recommendation data
+  bool _challengeCompleted = false; // Track if the daily challenge was completed
+  int _streakDays = 0;
+  List<String> _badges = [];
+  String? _selfCareTip;
+
 
   @override
   void initState() {
@@ -233,7 +244,7 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
 
   Future<void> _loadModel() async {
     try {
-      _interpreter = await Interpreter.fromAsset('assets/emotion_model.tflite');
+      _interpreter = await Interpreter.fromAsset('assets/emotio_model.tflite');
       print("✅ Model loaded successfully!");
     } catch (e) {
       print("❌ Error loading model: $e");
@@ -290,9 +301,11 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
 
       // Fetch recommendation from Firestore
       _fetchRecommendation(detectedEmotion);
+      await _fetchSelfCareTip(text);
 
       setState(() {
         _predictedEmotion = detectedEmotion;
+        _challengeCompleted = false; // Reset challenge completion status
       });
     } catch (e) {
       print("❌ Prediction error: $e");
@@ -338,15 +351,102 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
       print("❌ Firestore fetch error: $e");
     }
   }
+  Future<void> _fetchSelfCareTip(String userText) async {
+  String tip = await _generateSelfCareTip(userText);
+  setState(() {
+    _selfCareTip = tip;
+  });
+}
 
-  Future<void> _acceptGoal(String goal) async {
-    String userId = "user123"; // Replace with actual user ID from auth
-    await FirebaseFirestore.instance.collection('user_goals').doc(userId).set({
+
+Future<String> _generateSelfCareTip(String userText) async {
+  //const String apiKey = "YOUR_GEMINI_API_KEY"; // Replace with your actual Gemini API key
+  //const String geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText";
+  String apiKey = dotenv.env['GEMINI_API_KEY'] ?? ''; // Your API key from .env
+  String apiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro-002:generateContent?key=$apiKey";
+  final response = await http.post(
+    Uri.parse(apiUrl),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "prompt": {
+        "text": "Based on the following emotional text: \"$userText\", suggest a personalized self-care tip to help the user feel better."
+      },
+      "temperature": 0.7,
+      "maxTokens": 50
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    var data = jsonDecode(response.body);
+    return data["candidates"]?[0]?["output"] ?? "Take some deep breaths and do something that makes you happy.";
+  } else {
+    print("❌ Error fetching self-care tip: ${response.body}");
+    return "Take some deep breaths and do something that makes you happy.";
+  }
+}
+
+ Future<void> _acceptGoal(String goal, BuildContext context) async {
+  User? user = FirebaseAuth.instance.currentUser; // Get current user
+
+  if (user != null) {
+    String userEmail = user.email!; // Get user's email
+
+    await FirebaseFirestore.instance.collection('goals').doc(userEmail).set({
       'goals': FieldValue.arrayUnion([goal])
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Goal added successfully!")),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: User not logged in.")),
+    );
+  }
+}
+
+
+Future<void> _checkInFeedback(bool isHelpful) async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      String userEmail = user.email!;
+
+      await FirebaseFirestore.instance.collection('user_feedback').doc(userEmail).set({
+        'feedback': FieldValue.arrayUnion([
+          {'emotion': _predictedEmotion, 'helpful': isHelpful, 'timestamp': Timestamp.now()}
+        ])
+      }, SetOptions(merge: true));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isHelpful ? "Glad it helped! 😊" : "We'll improve the recommendations!")),
+      );
+
+      // Update streaks and badges
+      _updateGamification();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: User not logged in.")),
+      );
+    }
+  }
+
+  void _updateGamification() {
+    setState(() {
+      _streakDays++;
+      if (_streakDays == 3) _badges.add("3-Day Streak 🔥");
+      if (_streakDays == 7) _badges.add("1-Week Consistency 🏅");
+    });
+  }
+
+
+  void _markChallengeCompleted() {
+    setState(() {
+      _challengeCompleted = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Challenge completed! You earned a badge 🎖️")),
     );
   }
 
@@ -369,7 +469,8 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(child: 
+       Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -394,17 +495,42 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
             ],
             if (_recommendation != null) ...[
               Text("✨ Affirmation: ${_recommendation!['affirmation'] ?? ''}", style: TextStyle(fontSize: 16)),
-              Text("🧘 Self-Care Tip: ${_recommendation!['self_care_tip'] ?? ''}", style: TextStyle(fontSize: 16)),
+              Text("🧘 Self-Care Tip: ${_selfCareTip ?? 'Fetching tip...'}", style: TextStyle(fontSize: 16)),
               Text("📝 Journaling Prompt: ${_recommendation!['journaling_prompt'] ?? ''}", style: TextStyle(fontSize: 16)),
               Text("🎯 Suggested Goal: ${_recommendation!['suggested_goal'] ?? ''}", style: TextStyle(fontSize: 16)),
+              Text("🔥 Daily Challenge: ${_recommendation!['daily_challenge'] ?? ''}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () => _acceptGoal(_recommendation!['suggested_goal']),
+                onPressed: () => _acceptGoal(_recommendation!['suggested_goal'],context),
                 child: Text("Accept Goal"),
               ),
-            ],
+              const SizedBox(height: 10),
+              if (!_challengeCompleted)
+                ElevatedButton(
+                  onPressed: _markChallengeCompleted,
+                  child: Text("Complete Challenge 🎖️"),
+                ),
+                ElevatedButton(
+  onPressed: () => _checkInFeedback(true),
+  child: Text("✔ This Helped"),
+),
+
+ElevatedButton(
+  onPressed: () => _checkInFeedback(false),
+  child: Text("❌ Not Helpful"),
+),
+
+SizedBox(height: 20),
+
+Text("🏆 Your Streak: $_streakDays days", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+Text("🥇 Badges Earned: $_badges", style: TextStyle(fontSize: 16)),
+
+            ]
+            else
+                SizedBox.shrink(),
           ],
         ),
+      ),
       ),
     );
   }

@@ -1,0 +1,2 @@
+C:/Users/hp/Desktop/serviceapp/healpal/android/app/.cxx/Debug/636r3125/x86/CMakeFiles/edit_cache.dir
+C:/Users/hp/Desktop/serviceapp/healpal/android/app/.cxx/Debug/636r3125/x86/CMakeFiles/rebuild_cache.dir
