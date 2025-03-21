@@ -13,290 +13,219 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   final _formKey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
-
   bool _isLoading = false;
+  int _currentStep = 0;
 
   // Controllers
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController cityController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController otherHobbyController = TextEditingController();
 
-  String selectedGender = 'Female'; // Default gender
+  // Drop-down selections
+  String selectedGender = 'Female';
+  String selectedRelationship = 'Single';
+  String selectedOccupation = 'Student';
 
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    nameController.dispose();
-    cityController.dispose();
-    ageController.dispose();
-    phoneController.dispose();
-    super.dispose();
+  // Multiple choice selections
+  List<String> selectedHobbies = [];
+  List<String> selectedSelfCareActivities = [];
+  List<String> closeContacts = [];
+
+  // Predefined lists
+  List<String> hobbies = ['Reading', 'Music', 'Art', 'Sports', 'Gaming', 'Traveling', 'Cooking', 'Gardening', 'Others'];
+  List<String> selfCareActivities = ['Yoga', 'Meditation', 'Exercise', 'Journaling', 'Beauty Care', 'Nature Walks', 'Therapy'];
+  List<String> contacts = ['Mom', 'Dad', 'Sibling', 'Best Friend', 'Partner', 'Other'];
+
+  final List<String> _questions = [
+    "What is your gender?",
+    "What is your relationship status?",
+    "What is your occupation?",
+    "Select at least 3 hobbies",
+    "Select your self-care activities",
+    "Who do you turn to for emotional support?",
+  ];
+
+  void _nextStep() {
+    if (_currentStep == _questions.length) {
+      _registerUser();
+    } else {
+      setState(() => _currentStep++);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 164, 229, 239),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 50),
-                          const Text(
-                            "Register Now",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 36,
-                            ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_currentStep == 0) ..._buildBasicInfo(),
+                      if (_currentStep > 0) ..._buildQuestionStep(),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: _nextStep,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
                           ),
-                          const SizedBox(height: 40),
-                          _buildTextField(
-                            controller: nameController,
-                            hintText: 'Name',
-                            validator: _validateName,
-                          ),
-                          _buildTextField(
-                            controller: emailController,
-                            hintText: 'Email',
-                            keyboardType: TextInputType.emailAddress,
-                            validator: _validateEmail,
-                          ),
-                          _buildTextField(
-                            controller: passwordController,
-                            hintText: 'Password',
-                            obscureText: true,
-                            validator: _validatePassword,
-                          ),
-                          _buildTextField(
-                            controller: confirmPasswordController,
-                            hintText: 'Confirm Password',
-                            obscureText: true,
-                            validator: _validateConfirmPassword,
-                          ),
-                          _buildTextField(
-                            controller: cityController,
-                            hintText: 'City',
-                            validator: _validateCity,
-                          ),
-                          _buildTextField(
-                            controller: ageController,
-                            hintText: 'Age',
-                            keyboardType: TextInputType.number,
-                            validator: _validateAge,
-                          ),
-                          _buildTextField(
-                            controller: phoneController,
-                            hintText: 'Phone Number',
-                            keyboardType: TextInputType.phone,
-                            validator: _validatePhone,
-                          ),
-                          _buildGenderDropdown(),
-                          const SizedBox(height: 20),
-                          _buildActionButtons(),
-                        ],
+                          child: Text(_currentStep == _questions.length ? "Finish Registration" : "Next"),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
           ),
-          if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            ),
-        ],
+        ),
       ),
     );
   }
 
-  // TextField Widget
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    TextInputType keyboardType = TextInputType.text,
-    bool obscureText = false,
-    required String? Function(String?) validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          hintText: hintText,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 14),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color.fromARGB(255, 248, 161, 242)),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white),
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        validator: validator,
+  /// Step 1: Basic Information UI
+  List<Widget> _buildBasicInfo() {
+    return [
+      const Text(
+        "Welcome to HealPal!",
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple),
       ),
-    );
+      const SizedBox(height: 10),
+      const Text("Tell us a bit about yourself to personalize your experience.", style: TextStyle(fontSize: 16)),
+      const SizedBox(height: 20),
+      _buildTextField(controller: nameController, hintText: 'Full Name'),
+      _buildTextField(controller: emailController, hintText: 'Email', keyboardType: TextInputType.emailAddress),
+      _buildTextField(controller: passwordController, hintText: 'Password', obscureText: true),
+      _buildTextField(controller: ageController, hintText: 'Age', keyboardType: TextInputType.number),
+      _buildTextField(controller: phoneController, hintText: 'Phone Number', keyboardType: TextInputType.phone),
+      _buildTextField(controller: cityController, hintText: 'City'),
+    ];
   }
 
-  // Gender Dropdown
-  Widget _buildGenderDropdown() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: DropdownButtonFormField<String>(
-        value: selectedGender,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        items: ['Female', 'Male', 'Other'].map((String gender) {
-          return DropdownMenuItem(
-            value: gender,
-            child: Text(gender),
-          );
-        }).toList(),
-        onChanged: (value) {
+  /// Step 2+: Single Question UI
+  List<Widget> _buildQuestionStep() {
+    return [
+      Text(
+        _questions[_currentStep - 1],
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+      ),
+      const SizedBox(height: 20),
+      if (_currentStep == 1) _buildDropdown(['Female', 'Male', 'Other'], selectedGender, (value) => setState(() => selectedGender = value!)),
+      if (_currentStep == 2) _buildDropdown(['Single', 'In a Relationship', 'Married'], selectedRelationship, (value) => setState(() => selectedRelationship = value!)),
+      if (_currentStep == 3) _buildDropdown(['Student', 'Working Professional', 'Self-Employed', 'Unemployed'], selectedOccupation, (value) => setState(() => selectedOccupation = value!)),
+      if (_currentStep == 4) _buildMultiSelect(hobbies, selectedHobbies, "Other", otherHobbyController),
+      if (_currentStep == 5) _buildMultiSelect(selfCareActivities, selectedSelfCareActivities),
+      if (_currentStep == 6) _buildMultiSelect(contacts, closeContacts),
+    ];
+  }
+
+  Widget _buildDropdown(List<String> options, String selectedValue, Function(String?) onChanged) {
+    return DropdownButtonFormField(
+      value: selectedValue,
+      decoration: const InputDecoration(border: OutlineInputBorder()),
+      items: options.map((String value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+      onChanged: onChanged,
+    );
+  }
+Widget _buildMultiSelect(List<String> options, List<String> selectedList, [String? otherOption, TextEditingController? otherController]) {
+  List<Widget> checkboxes = options.map((option) {
+    return CheckboxListTile(
+      title: Text(option),
+      value: selectedList.contains(option),
+      onChanged: (isChecked) {
+        setState(() {
+          isChecked! ? selectedList.add(option) : selectedList.remove(option);
+        });
+      },
+    );
+  }).toList();
+
+  if (otherOption != null) {
+    checkboxes.add(
+      CheckboxListTile(
+        title: Text(otherOption),
+        value: selectedList.contains(otherOption),
+        onChanged: (isChecked) {
           setState(() {
-            selectedGender = value!;
+            if (isChecked!) {
+              selectedList.add(otherOption);
+            } else {
+              selectedList.remove(otherOption);
+            }
           });
         },
       ),
     );
+
+    if (selectedList.contains(otherOption)) {
+      checkboxes.add(
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: TextField(
+            controller: otherController,
+            decoration: const InputDecoration(
+              labelText: "Specify Other",
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+      );
+    }
   }
 
-  // Action Buttons
-  Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          child: const Text("Login", style: TextStyle(fontSize: 20)),
-        ),
-        ElevatedButton(
-          onPressed: _register,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[700],
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          child: const Text("Register", style: TextStyle(fontSize: 20)),
-        ),
-      ],
+  return Column(children: checkboxes);
+}
+
+
+  // Widget _buildTextField({required TextEditingController controller, required String hintText, TextInputType keyboardType = TextInputType.text, bool obscureText = false}) {
+  //   return TextFormField(
+  //     controller: controller,
+  //     keyboardType: keyboardType,
+  //     obscureText: obscureText,
+  //     decoration: InputDecoration(labelText: hintText, border: OutlineInputBorder()),
+  //   );
+  // }
+   Widget _buildTextField({required TextEditingController controller, required String hintText, TextInputType keyboardType = TextInputType.text, bool obscureText = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        obscureText: obscureText,
+        decoration: InputDecoration(labelText: hintText, border: OutlineInputBorder()),
+      ),
     );
   }
 
-  // Validation Methods
-  String? _validateName(String? value) => value!.isEmpty ? "Name cannot be empty" : null;
-
-  String? _validateEmail(String? value) {
-    if (value!.isEmpty) return "Email cannot be empty";
-    if (!RegExp(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\.[a-z]+$').hasMatch(value)) {
-      return "Enter a valid email";
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) => value!.length < 6 ? "Password must be at least 6 characters" : null;
-
-  String? _validateConfirmPassword(String? value) =>
-      value != passwordController.text ? "Passwords do not match" : null;
-
-  String? _validateCity(String? value) => value!.isEmpty ? "City cannot be empty" : null;
-
-  String? _validateAge(String? value) {
-    if (value!.isEmpty) return "Age cannot be empty";
-    if (int.tryParse(value) == null || int.parse(value) <= 0) {
-      return "Enter a valid age";
-    }
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    if (value!.isEmpty) return "Phone number cannot be empty";
-    if (!RegExp(r'^\d{10}$').hasMatch(value)) return "Phone number must be 10 digits";
-    return null;
-  }
-
-  // Registration Method
-  Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  Future<void> _registerUser() async {
     setState(() => _isLoading = true);
-
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
-      );
-      await _postDetailsToFirestore(userCredential.user!.uid);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Registration Successful")),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: emailController.text, password: passwordController.text);
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'name': nameController.text,
+        'email': emailController.text,
+        'gender': selectedGender,
+        'relationship_status': selectedRelationship,
+        'occupation': selectedOccupation,
+        'hobbies': selectedHobbies,
+        'self_care_activities': selectedSelfCareActivities,
+        'close_contacts': closeContacts,
+        'role':'customer',
+        'xp':0,
+        'streak':0
+      });
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-
-  Future<void> _postDetailsToFirestore(String uid) async {
-    CollectionReference users = FirebaseFirestore.instance.collection('users');
-    await users.doc(uid).set({
-      'name': nameController.text,
-      'email': emailController.text,
-      'role': "Customer", // Default role
-      'gender': selectedGender,
-      'city': cityController.text,
-      'age': int.parse(ageController.text),
-      'phone': phoneController.text,
-      'xp':0,
-      'streak':0
-    });
   }
 }
