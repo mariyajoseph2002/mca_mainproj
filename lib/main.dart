@@ -266,6 +266,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'timezone_helper.dart';
+import 'auth_services.dart';
+import 'login2.dart';
+import 'customer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void initializeTimeZone() {
   tz.initializeTimeZones(); // ✅ Initialize all time zones
@@ -454,10 +458,10 @@ Future<void> main() async {
   //initializeNotifications();
   
  
-  runApp(const MyApp());
+  runApp( MyApp());
 }
 
-class MyApp extends StatefulWidget {
+/* class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
@@ -474,5 +478,32 @@ class _MyAppState extends State<MyApp> {
       ),
       home: const MainPage(),
     );
+  }
+} */
+class MyApp extends StatelessWidget {
+  final AuthService _authService = AuthService();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: FutureBuilder<Map<String, String?>>(
+        future: _authService.getCurrentUserData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          } else if (snapshot.hasData && snapshot.data!['userId'] != null) {
+            String? role = snapshot.data!['role'];
+            if (role?.toLowerCase() == "customer") {
+              return const Customer();
+            } else {
+              return const LoginPage(); // Fallback to login if role is invalid
+            }
+          } else {
+            // User is not logged in, show the login screen
+            return const LoginPage();
+          }
+        },
+      ),
+         );
   }
 }

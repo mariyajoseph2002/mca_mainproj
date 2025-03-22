@@ -109,7 +109,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:healpal/goal_list_screen.dart';
-import 'login.dart';
+import 'login2.dart';
 import 'daily_journals.dart';
 import 'emotion_finder.dart';
 import 'medical_records_screen.dart';
