@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "healpal-6182f"
-  }
+    "default": "healpal-6182f",
+    "staging": "healpal-6182f"
+  },
+  "targets": {},
+  "etags": {}
 }

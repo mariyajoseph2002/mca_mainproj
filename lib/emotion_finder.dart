@@ -192,7 +192,7 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
 import 'package:flutter/material.dart';
 import 'package:tflite_flutter/tflite_flutter.dart'; 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+//import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:typed_data';
 import 'dart:convert';
 import 'dart:math';
@@ -215,7 +215,7 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
   Map<String, int> wordToIndex = {};
   final TextEditingController _textController = TextEditingController();
   
-  stt.SpeechToText _speech = stt.SpeechToText();
+  //stt.SpeechToText _speech = stt.SpeechToText();
   Interpreter? _interpreter;
   bool _isListening = false;
   String? _predictedEmotion;
@@ -232,7 +232,7 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
     _loadModel();
     _loadTokenizer();
     requestMicrophonePermission(); 
-    initSpeech();
+   // initSpeech();
   }
 
   Future<void> requestMicrophonePermission() async {
@@ -260,13 +260,13 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
     }
   }
 
-  void initSpeech() async {
+/*   void initSpeech() async {
     bool available = await _speech.initialize();
     if (!available) {
       print("Speech recognition not available");
     }
-  }
-
+  } */
+/* 
   void _startListening() async {
     if (!_speech.isAvailable) return;
 
@@ -284,7 +284,7 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
   void _stopListening() {
     _speech.stop();
     setState(() => _isListening = false);
-  }
+  } */
 
   void _analyzeEmotion() async {
     String text = _textController.text.trim();
@@ -463,10 +463,10 @@ Future<void> _checkInFeedback(bool isHelpful) async {
         title: const Text("Emotion Finder"),
         backgroundColor: Color.fromARGB(255, 238, 160, 233),
         actions: [
-          IconButton(
+          /* IconButton(
             icon: Icon(_isListening ? Icons.mic_off : Icons.mic, size: 28),
             onPressed: _isListening ? _stopListening : _startListening,
-          ),
+          ), */
         ],
       ),
       body: SingleChildScrollView(child: 

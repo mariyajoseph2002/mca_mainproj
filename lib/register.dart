@@ -23,7 +23,15 @@ class _RegisterState extends State<Register> {
   final TextEditingController ageController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
-  final TextEditingController otherHobbyController = TextEditingController();
+
+
+
+
+  final TextEditingController otherOccupationController = TextEditingController();
+final TextEditingController otherHobbyController = TextEditingController();
+  final TextEditingController otherSelfCareController = TextEditingController();
+  final TextEditingController otherContactController = TextEditingController();
+
 
   // Drop-down selections
   String selectedGender = 'Female';
@@ -35,10 +43,27 @@ class _RegisterState extends State<Register> {
   List<String> selectedSelfCareActivities = [];
   List<String> closeContacts = [];
 
+
+@override
+  void dispose() {
+    // Dispose all controllers
+    nameController.dispose();
+    emailController.dispose();
+    ageController.dispose();
+    phoneController.dispose();
+    cityController.dispose();
+    passwordController.dispose();
+   
+    otherOccupationController.dispose();
+    otherHobbyController.dispose();
+    otherSelfCareController.dispose();
+    otherContactController.dispose();
+    super.dispose();
+  }
   // Predefined lists
-  List<String> hobbies = ['Reading', 'Music', 'Art', 'Sports', 'Gaming', 'Traveling', 'Cooking', 'Gardening', 'Others'];
+  List<String> hobbies = ['Reading', 'Music', 'Art', 'Sports', 'Gaming', 'Traveling', 'Cooking', 'Gardening'];
   List<String> selfCareActivities = ['Yoga', 'Meditation', 'Exercise', 'Journaling', 'Beauty Care', 'Nature Walks', 'Therapy'];
-  List<String> contacts = ['Mom', 'Dad', 'Sibling', 'Best Friend', 'Partner', 'Other'];
+  List<String> contacts = ['Mom', 'Dad', 'Sibling', 'Best Friend', 'Partner'];
 
   final List<String> _questions = [
     "What is your gender?",
@@ -49,15 +74,79 @@ class _RegisterState extends State<Register> {
     "Who do you turn to for emotional support?",
   ];
 
-  void _nextStep() {
-    if (_currentStep == _questions.length) {
-      _registerUser();
-    } else {
-      setState(() => _currentStep++);
+void _nextStep() {
+  if (_currentStep == 6 && closeContacts.isEmpty) {
+    showErrorMessage("Please select at least one close contact.");
+    return;
+  }
+
+  if (_currentStep < _questions.length) {
+    setState(() {
+      _currentStep++;
+    });
+  } else {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      _registerUser();  // Ensure this function exists and works
+    }
+  }
+}
+
+
+ /*  void _nextStep() {
+  setState(() {
+    if (_currentStep == 6 && closeContacts.isEmpty) {
+      // Ensure the user selects at least one close contact
+      showErrorMessage("Please select at least one close contact.");
+      return;
+    }
+    if (_currentStep < 6) {
+      _currentStep++;
+    }
+  });
+  } */
+void showErrorMessage(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message, style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+  );
+}
+/* 
+void _nextStep() {
+  print("Current Step Before: $_currentStep");
+  print("Total Steps: ${_questions.length}");
+
+  // If on the last step (Close Contacts selection), ensure at least one is selected
+  if (_currentStep == _questions.length - 1) {
+    if (closeContacts.isEmpty) {  
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select at least one emotional support contact."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;  // Prevent moving forward
     }
   }
 
-  @override
+  if (_currentStep == _questions.length) {  // Last step before registration
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      _registerUser();
+    }
+  } else {
+    setState(() {
+      _currentStep++;  // Move to the next step
+    });
+    print("Current Step After: $_currentStep");
+  }
+}
+
+ */
+
+
+
+
+/*   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -77,7 +166,8 @@ class _RegisterState extends State<Register> {
                         child: ElevatedButton(
                           onPressed: _nextStep,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: const Color.fromARGB(255, 178, 153, 222),
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
                           ),
@@ -90,7 +180,47 @@ class _RegisterState extends State<Register> {
         ),
       ),
     );
-  }
+  } */
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Form(  // Wrap with Form
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_currentStep == 0) ..._buildBasicInfo(),
+                      if (_currentStep > 0) ..._buildQuestionStep(),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: _nextStep,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 178, 153, 222),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+                          ),
+                         
+
+                          child: Text(_currentStep == _questions.length ? "Finish Registration" : "Next"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ),
+    ),
+  );
+}
 
   /// Step 1: Basic Information UI
   List<Widget> _buildBasicInfo() {
@@ -112,7 +242,7 @@ class _RegisterState extends State<Register> {
   }
 
   /// Step 2+: Single Question UI
-  List<Widget> _buildQuestionStep() {
+/*   List<Widget> _buildQuestionStep() {
     return [
       Text(
         _questions[_currentStep - 1],
@@ -122,9 +252,26 @@ class _RegisterState extends State<Register> {
       if (_currentStep == 1) _buildDropdown(['Female', 'Male', 'Other'], selectedGender, (value) => setState(() => selectedGender = value!)),
       if (_currentStep == 2) _buildDropdown(['Single', 'In a Relationship', 'Married'], selectedRelationship, (value) => setState(() => selectedRelationship = value!)),
       if (_currentStep == 3) _buildDropdown(['Student', 'Working Professional', 'Self-Employed', 'Unemployed'], selectedOccupation, (value) => setState(() => selectedOccupation = value!)),
-      if (_currentStep == 4) _buildMultiSelect(hobbies, selectedHobbies, "Other", otherHobbyController),
+      //if (_currentStep == 4) _buildMultiSelect(hobbies, selectedHobbies, "Other", otherHobbyController),
+      if (_currentStep == 4) _buildMultiSelect(hobbies, selectedHobbies),
       if (_currentStep == 5) _buildMultiSelect(selfCareActivities, selectedSelfCareActivities),
       if (_currentStep == 6) _buildMultiSelect(contacts, closeContacts),
+    ];
+  } */
+ List<Widget> _buildQuestionStep() {
+    return [
+      Text(
+        _questions[_currentStep - 1],
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+      ),
+      const SizedBox(height: 20),
+      if (_currentStep == 1) _buildDropdown(['Female', 'Male', 'Other'], selectedGender, (value) => setState(() => selectedGender = value!)),
+      if (_currentStep == 2) _buildDropdown(['Single', 'In a Relationship', 'Married'], selectedRelationship, (value) => setState(() => selectedRelationship = value!)),
+      if (_currentStep == 3) _buildDropdown(['Student', 'Working Professional', 'Self-Employed', 'Unemployed', 'Other'], selectedOccupation, (value) => setState(() => selectedOccupation = value!)),
+     // if (selectedOccupation == 'Other') _buildTextField(controller: otherOccupationController, hintText: "Specify your occupation"),
+      if (_currentStep == 4) _buildMultiSelect(hobbies, selectedHobbies, "Other",otherHobbyController),
+      if (_currentStep == 5) _buildMultiSelect(selfCareActivities, selectedSelfCareActivities, "Other",otherSelfCareController),
+      if (_currentStep == 6) _buildMultiSelect(contacts, closeContacts, "Other",otherContactController),
     ];
   }
 
@@ -137,39 +284,40 @@ class _RegisterState extends State<Register> {
     );
   }
 Widget _buildMultiSelect(List<String> options, List<String> selectedList, [String? otherOption, TextEditingController? otherController]) {
-  List<Widget> checkboxes = options.map((option) {
-    return CheckboxListTile(
-      title: Text(option),
-      value: selectedList.contains(option),
-      onChanged: (isChecked) {
-        setState(() {
-          isChecked! ? selectedList.add(option) : selectedList.remove(option);
-        });
-      },
-    );
-  }).toList();
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      ...options.map((option) {
+        return CheckboxListTile(
+          title: Text(option),
+          value: selectedList.contains(option),
+          onChanged: (isChecked) {
+            setState(() {
+              isChecked! ? selectedList.add(option) : selectedList.remove(option);
+            });
+          },
+        );
+      }).toList(),
 
-  if (otherOption != null) {
-    checkboxes.add(
-      CheckboxListTile(
-        title: Text(otherOption),
-        value: selectedList.contains(otherOption),
-        onChanged: (isChecked) {
-          setState(() {
-            if (isChecked!) {
-              selectedList.add(otherOption);
-            } else {
-              selectedList.remove(otherOption);
-            }
-          });
-        },
-      ),
-    );
+      if (otherOption != null) 
+        CheckboxListTile(
+          title: Text(otherOption),
+          value: selectedList.contains(otherOption),
+          onChanged: (isChecked) {
+            setState(() {
+              if (isChecked!) {
+                selectedList.add(otherOption);
+              } else {
+                selectedList.remove(otherOption);
+                otherController?.clear(); // Clear input when deselected
+              }
+            });
+          },
+        ),
 
-    if (selectedList.contains(otherOption)) {
-      checkboxes.add(
+      if (otherOption != null && selectedList.contains(otherOption))
         Padding(
-          padding: const EdgeInsets.only(left: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: TextField(
             controller: otherController,
             decoration: const InputDecoration(
@@ -178,12 +326,17 @@ Widget _buildMultiSelect(List<String> options, List<String> selectedList, [Strin
             ),
           ),
         ),
-      );
-    }
-  }
-
-  return Column(children: checkboxes);
+    ],
+  );
 }
+
+
+
+
+
+
+
+
 
 
   // Widget _buildTextField({required TextEditingController controller, required String hintText, TextInputType keyboardType = TextInputType.text, bool obscureText = false}) {
@@ -207,25 +360,59 @@ Widget _buildMultiSelect(List<String> options, List<String> selectedList, [Strin
   }
 
   Future<void> _registerUser() async {
-    setState(() => _isLoading = true);
-    try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: emailController.text, password: passwordController.text);
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'name': nameController.text,
-        'email': emailController.text,
+ /*  if (_formKey.currentState == null) {
+    print("Error: _formKey.currentState is null");
+    return;
+  }
+
+  if (!_formKey.currentState!.validate()) {
+    print("Form validation failed");
+    return;
+  } */
+
+  setState(() => _isLoading = true);
+
+  try {
+    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    User? user = userCredential.user;
+
+    if (user != null) {
+      String uid = user.uid;
+
+      // Replace "Other" with the actual input
+      String finalOccupation = selectedOccupation == "Other" ? otherOccupationController.text.trim() : selectedOccupation;
+      List<String> finalHobbies = selectedHobbies.map((hobby) => hobby == "Other" ? otherHobbyController.text.trim() : hobby).toList();
+      List<String> finalSelfCare = selectedSelfCareActivities.map((activity) => activity == "Other" ? otherSelfCareController.text.trim() : activity).toList();
+      List<String> finalContacts = closeContacts.map((contact) => contact == "Other" ? otherContactController.text.trim() : contact).toList();
+
+      // Store user details in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'name': nameController.text.trim(),
+        'email': emailController.text.trim(),
+        'age': int.parse(ageController.text.trim()),
+        'phone': phoneController.text.trim(),
+        'city': cityController.text.trim(),
         'gender': selectedGender,
         'relationship_status': selectedRelationship,
-        'occupation': selectedOccupation,
-        'hobbies': selectedHobbies,
-        'self_care_activities': selectedSelfCareActivities,
-        'close_contacts': closeContacts,
-        'role':'customer',
-        'xp':0,
-        'streak':0
+        'occupation': finalOccupation,
+        'hobbies': finalHobbies,
+        'self_care_activities': finalSelfCare,
+        'close_contacts': finalContacts,
+        'registration_date': Timestamp.now(),
       });
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Succesfully added your details"), backgroundColor: const Color.fromARGB(255, 158, 224, 149)));
+
+      // Navigate to next screen
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
-    } finally {
-      setState(() => _isLoading = false);
     }
+  } catch (e) {
+    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}"), backgroundColor: Colors.red));
   }
+}
+
 }

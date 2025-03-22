@@ -1,4 +1,4 @@
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+/* import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class SpeechToTextService {
   final stt.SpeechToText _speech = stt.SpeechToText();
@@ -20,3 +20,4 @@ class SpeechToTextService {
 
   void stop() => _speech.stop();
 }
+ */

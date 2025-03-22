@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "415410088588",
+    "project_id": "healpal-6182f",
+    "storage_bucket": "healpal-6182f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:415410088588:android:b11fcaf87acf6cadf769a9",
+        "android_client_info": {
+          "package_name": "com.example.healpal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzZvMt9ygFtsmcw8XLiI4Cv5OZm1Vjlxo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

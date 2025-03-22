@@ -1,0 +1,2 @@
+C:/Users/hp/Desktop/serviceapp/healpal/android/app/.cxx/RelWithDebInfo/3s6e5b6t/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/hp/Desktop/serviceapp/healpal/android/app/.cxx/RelWithDebInfo/3s6e5b6t/armeabi-v7a/CMakeFiles/rebuild_cache.dir
