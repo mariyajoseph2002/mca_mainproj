@@ -86,6 +86,7 @@ flutter:
   assets:
 
     - assets/emotio_model.tflite
+    - assets/depression_model.tflite
     - assets/tokenizer.json
     - .env
 

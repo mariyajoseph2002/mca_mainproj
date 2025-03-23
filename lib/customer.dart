@@ -115,7 +115,7 @@ import 'emotion_finder.dart';
 import 'medical_records_screen.dart';
 import 'selfimprovementscreen.dart';
 import 'notification.dart';
-import 'analysis.dart';
+import 'analy.dart';
 
 class Customer extends StatefulWidget {
   const Customer({super.key});
