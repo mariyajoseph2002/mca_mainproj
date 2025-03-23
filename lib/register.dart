@@ -403,6 +403,9 @@ Widget _buildMultiSelect(List<String> options, List<String> selectedList, [Strin
         'self_care_activities': finalSelfCare,
         'close_contacts': finalContacts,
         'registration_date': Timestamp.now(),
+        'role':'customer',
+        'xp':0,
+        'streak':0
       });
        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Succesfully added your details"), backgroundColor: const Color.fromARGB(255, 158, 224, 149)));
 

@@ -115,6 +115,7 @@ import 'emotion_finder.dart';
 import 'medical_records_screen.dart';
 import 'selfimprovementscreen.dart';
 import 'notification.dart';
+import 'analysis.dart';
 
 class Customer extends StatefulWidget {
   const Customer({super.key});
@@ -211,6 +212,7 @@ class _CustomerState extends State<Customer> {
         buildDrawerItem(Icons.folder, "Medical Records", (drawer) => MedicalRecordsScreen(drawer: drawer)),
         buildDrawerItem(Icons.eco, "Self Improvement", (drawer) => SelfImprovementScreen(drawer: drawer)),
         buildDrawerItem(Icons.eco, "noti", (drawer) => Noti(drawer: drawer)),
+        buildDrawerItem(Icons.insights, "Analysis", (drawer) => AnalysisPage(drawer: drawer)),
         const Divider(),
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.red),

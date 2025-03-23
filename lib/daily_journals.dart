@@ -243,11 +243,13 @@ class DailyJournalsPage extends StatefulWidget {
 class _DailyJournalsPageState extends State<DailyJournalsPage> {
   int _currentQuestionIndex = 0;
   String? _userEmail;
+  TimeOfDay? _reminderTime;
 
   @override
   void initState() {
     super.initState();
     _fetchUserEmail();
+    _loadReminderTime();
   }
 
   void _fetchUserEmail() {
@@ -256,6 +258,58 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
       setState(() {
         _userEmail = user.email;
       });
+    }
+  }
+  Future<void> _loadReminderTime() async {
+    if (_userEmail == null) return;
+
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('user_settings')
+        .doc(_userEmail)
+        .get();
+
+    if (doc.exists) {
+      var data = doc.data() as Map<String, dynamic>;
+      if (data['reminder_time'] != null) {
+        setState(() {
+          _reminderTime = TimeOfDay(
+            hour: data['reminder_time']['hour'],
+            minute: data['reminder_time']['minute'],
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _saveReminderTime(TimeOfDay time) async {
+    if (_userEmail == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('user_settings')
+        .doc(_userEmail)
+        .set({
+      'reminder_time': {
+        'hour': time.hour,
+        'minute': time.minute,
+      },
+      }, SetOptions(merge: true));
+
+    setState(() {
+      _reminderTime = time;
+    });
+
+    // TODO: Schedule a daily notification using the selected time
+    // You can use the `flutter_local_notifications` package for this.
+  }
+
+  Future<void> _showTimePicker() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime ?? TimeOfDay.now(),
+    );
+
+    if (pickedTime != null) {
+      await _saveReminderTime(pickedTime);
     }
   }
 
@@ -383,6 +437,7 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
 
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true, 
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -390,13 +445,17 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
       builder: (context, setState) {
         return Container(
           padding: const EdgeInsets.all(16),
-          height: 400,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8, // Set max height to 80% of screen height
+          ),
           child: Column(
+             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 "📅 Select a Date",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+               const SizedBox(height: 16),
               Expanded(
                 child: TableCalendar(
                   firstDay: DateTime.utc(2023, 1, 1),
@@ -494,6 +553,10 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
             icon: const Icon(Icons.calendar_today),
             onPressed: _showCalendar,
           ),
+          IconButton(
+            icon: const Icon(Icons.alarm),
+            onPressed: _showTimePicker,
+          ),
         ],
       ),
       drawer: widget.drawer,
@@ -523,6 +586,14 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
                   ),
                 );
               }).toList(),
+              if (_reminderTime != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Text(
+                    "⏰ Reminder set for ${_reminderTime!.format(context)}",
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),
             ],
           ),
         ),
