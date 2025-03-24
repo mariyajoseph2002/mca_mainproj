@@ -46,11 +46,12 @@ class _AnalysisPageState extends State<AnalysisPage> {
   if (_journalEntries.isEmpty) return 0;
 
   List<double> input = [
-    (_journalEntries.last['mood'] ?? 0) / 3.0,  
-    (_journalEntries.last['social_interaction'] ?? 0).toDouble(),
-    (_journalEntries.last['work_productivity'] ?? 0).toDouble(),
-    (_journalEntries.last['hobbies_selfcare'] ?? 0).toDouble(),
-    (_journalEntries.last['emotional_triggers'] ?? 0).toDouble(),
+    //(_journalEntries.first['mood'] ?? 0) / 3.0,  
+    (_journalEntries.first['mood'] ?? 0).toDouble(),  
+    (_journalEntries.first['social_interaction'] ?? 0).toDouble(),
+    (_journalEntries.first['work_productivity'] ?? 0).toDouble(),
+    (_journalEntries.first['hobbies_selfcare'] ?? 0).toDouble(),
+    (_journalEntries.first['emotional_triggers'] ?? 0).toDouble(),
     _calculateSadNumbPercentage() / 100.0,
   ];
 
@@ -58,6 +59,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
   await predictor.loadModel();
 
   // Standardize input before prediction
+  print("input before:$input");
   List<double> standardizedInput = predictor.standardizeInput(input);
   var inputBuffer = Float32List.fromList(standardizedInput);
 

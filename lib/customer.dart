@@ -110,7 +110,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:healpal/goal_list_screen.dart';
 import 'login2.dart';
-import 'daily_journals.dart';
+import 'jornal2.dart';
 import 'emotion_finder.dart';
 import 'medical_records_screen.dart';
 import 'selfimprovementscreen.dart';
@@ -211,7 +211,7 @@ class _CustomerState extends State<Customer> {
         buildDrawerItem(Icons.mood, "Emotion Finder", (drawer) => EmotionFinderScreen(drawer: drawer)),
         buildDrawerItem(Icons.folder, "Medical Records", (drawer) => MedicalRecordsScreen(drawer: drawer)),
         buildDrawerItem(Icons.eco, "Self Improvement", (drawer) => SelfImprovementScreen(drawer: drawer)),
-        buildDrawerItem(Icons.eco, "noti", (drawer) => Noti(drawer: drawer)),
+        //buildDrawerItem(Icons.eco, "noti", (drawer) => Noti(drawer: drawer)),
         buildDrawerItem(Icons.insights, "Analysis", (drawer) => AnalysisPage(drawer: drawer)),
         const Divider(),
         ListTile(
