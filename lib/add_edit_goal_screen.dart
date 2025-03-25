@@ -65,7 +65,8 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.goalId == null ? "Add Goal" : "Edit Goal"),
-        backgroundColor: Color.fromARGB(255, 238, 160, 233),
+       backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -101,6 +102,11 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 61, 93, 74),
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               onPressed: saveGoal,
               child: Text("Save Goal"),
             ),

@@ -547,7 +547,8 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Daily Journals"),
-        backgroundColor: const Color.fromARGB(255, 222, 172, 231),
+        backgroundColor: const Color.fromARGB(255, 14, 7, 143),
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),

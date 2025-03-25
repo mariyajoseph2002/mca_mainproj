@@ -461,7 +461,8 @@ Future<void> _checkInFeedback(bool isHelpful) async {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Emotion Finder"),
-        backgroundColor: Color.fromARGB(255, 238, 160, 233),
+        backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
         actions: [
           /* IconButton(
             icon: Icon(_isListening ? Icons.mic_off : Icons.mic, size: 28),
@@ -522,8 +523,8 @@ ElevatedButton(
 
 SizedBox(height: 20),
 
-Text("🏆 Your Streak: $_streakDays days", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-Text("🥇 Badges Earned: $_badges", style: TextStyle(fontSize: 16)),
+//Text("🏆 Your Streak: $_streakDays days", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//Text("🥇 Badges Earned: $_badges", style: TextStyle(fontSize: 16)),
 
             ]
             else

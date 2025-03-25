@@ -147,7 +147,8 @@ Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       title: const Text("Journal Analysis"),
-      backgroundColor: const Color.fromARGB(255, 222, 172, 231),
+    backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
     ),
     drawer: widget.drawer,
     body: _journalEntries.isEmpty
@@ -178,7 +179,7 @@ Widget build(BuildContext context) {
                         LineChartBarData(
                           spots: _generateMoodTrendData(),
                           isCurved: true,
-                          color: Colors.purple,
+                          color: const Color.fromARGB(255, 24, 100, 58),
                           dotData: FlDotData(show: false),
                           belowBarData: BarAreaData(show: false),
                         ),

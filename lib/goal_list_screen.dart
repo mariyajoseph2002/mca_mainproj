@@ -271,7 +271,8 @@ class _GoalListScreenState extends State<GoalListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Your Goals', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.purpleAccent,
+        backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
         elevation: 0,
         actions: [
           IconButton(
@@ -338,7 +339,7 @@ class _GoalListScreenState extends State<GoalListScreen> {
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
+                  backgroundColor: Color.fromARGB(255, 61, 93, 74),
                   padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -355,7 +356,7 @@ class _GoalListScreenState extends State<GoalListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.purpleAccent,
+        backgroundColor:Color.fromARGB(255, 61, 93, 74),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => AddEditGoalScreen()),
@@ -386,7 +387,7 @@ class _GoalListScreenState extends State<GoalListScreen> {
                   : Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.purpleAccent.withOpacity(0.1),
+                        color: const Color.fromARGB(255, 154, 216, 175),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -400,11 +401,11 @@ class _GoalListScreenState extends State<GoalListScreen> {
                 children: [
                   TextButton(
                     onPressed: fetchAiGoal,
-                    child: Text('Regenerate', style: TextStyle(color: Colors.purpleAccent)),
+                    child: Text('Regenerate', style: TextStyle(color: const Color.fromARGB(255, 154, 216, 175))),
                   ),
                   ElevatedButton(
                     onPressed: saveAiGoal,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.purpleAccent),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 154, 216, 175)),
                     child: Text('Save'),
                   ),
                 ],
@@ -443,7 +444,7 @@ class _GoalListScreenState extends State<GoalListScreen> {
               lineHeight: 8.0,
               percent: ((goal['progress'] ?? 0) / 100).clamp(0.0, 1.0),
               backgroundColor: Colors.grey[300]!,
-              progressColor: Colors.purpleAccent,
+              progressColor: const Color.fromARGB(255, 154, 216, 175),
               barRadius: Radius.circular(5),
             ),
             Align(

@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'notification_service.dart';
+import 'riskanaly.dart';
 
 class DailyJournalsPage extends StatefulWidget {
   final Widget drawer;
@@ -245,39 +246,31 @@ Future<void> _saveAnswer(String field, int value) async {
   String formattedDate = "${today.year}-${today.month}-${today.day}";
 
   try {
-    // Check if a journal entry already exists for today
-    DocumentSnapshot journalDoc = await FirebaseFirestore.instance
-        .collection('journals')
-        .doc("$_userEmail-$formattedDate")
-        .get();
-
-    if (journalDoc.exists) {
-      // If a journal entry exists, show a message and return
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("You have already completed today's journal.")),
-      );
-      return; // Do nothing further if the journal exists
-    }
-
-    // If no journal entry exists, save the journal data for today
+    // Reference to today's journal entry
     DocumentReference journalRef = FirebaseFirestore.instance
         .collection('journals')
         .doc("$_userEmail-$formattedDate");
 
-    await journalRef.set(
-      {
-        'user_email': _userEmail,
-        'date': today,
-        field: value,
-      },
-      SetOptions(merge: true), // Merge ensures previous answers aren't lost
-    );
+    // Check if journal entry already exists
+    DocumentSnapshot journalDoc = await journalRef.get();
 
-    // Show completion message after successful saving
-    _showCompletionMessage();
-
+    // If no journal entry exists, create one with the first response
+    if (!journalDoc.exists) {
+      await journalRef.set(
+        {
+          'user_email': _userEmail,
+          'date': today,
+          field: value, // Store the first answer
+        },
+        SetOptions(merge: true), // Ensure new fields are merged instead of replacing
+      );
+    } else {
+      // If journal entry exists, just update with the new answer
+      await journalRef.update({
+        field: value, // Add/update the answer field in the existing journal
+      });
+    }
   } catch (e) {
-    // Handle errors (network issues, etc.)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Failed to save journal. Please try again.")),
     );
@@ -288,15 +281,13 @@ void _selectAnswer(String answer) async {
   String field = _questions[_currentQuestionIndex]['field'];
   int value = _questions[_currentQuestionIndex]['options'][answer];
 
-  // Save the answer and proceed only if it is saved successfully
   await _saveAnswer(field, value);
 
-  // If the journal has been saved, move to the next question or show completion message
   setState(() {
     if (_currentQuestionIndex < _questions.length - 1) {
       _currentQuestionIndex++;
     } else {
-      // If all questions are answered, show the completion message
+      // Show completion message **only after the last question**
       _showCompletionMessage();
     }
   });
@@ -322,6 +313,7 @@ void _showCompletionMessage() {
     ),
   );
 }
+
 
 
  void _showCalendar() async {
@@ -452,7 +444,8 @@ void _showCompletionMessage() {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Daily Journals"),
-        backgroundColor: const Color.fromARGB(255, 222, 172, 231),
+        backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -465,7 +458,14 @@ void _showCompletionMessage() {
         ],
       ),
       drawer: widget.drawer,
-      body: Center(
+      body: Container(
+        /* decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [const Color.fromARGB(255, 90, 188, 124),const Color.fromARGB(255, 27, 75, 49),],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ), */child:Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -483,11 +483,11 @@ void _showCompletionMessage() {
                   child: ElevatedButton(
                     onPressed: () => _selectAnswer(option),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:  const Color.fromARGB(255, 222, 172, 231),
+                      backgroundColor: Color.fromARGB(255, 61, 93, 74),
                       padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(option, style: const TextStyle(fontSize: 16)),
+                    child: Text(option, style: const TextStyle(fontSize: 16,color: const Color.fromARGB(255, 241, 250, 245))),
                   ),
                 );
               }).toList(),
@@ -496,12 +496,31 @@ void _showCompletionMessage() {
                   padding: const EdgeInsets.only(top: 20),
                   child: Text(
                     "⏰ Reminder set for ${_reminderTime!.format(context)}",
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 61, 93, 74)),
                   ),
                 ),
+                const SizedBox(height: 30),
+              // New Button
+              ElevatedButton(
+                onPressed: () {
+                  // Add your button functionality here
+                  Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const  MentalHealthAssessmentWidget()),
+              );
+                  print("Button Pressed!");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 36, 112, 71),
+                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text("See your results this week", style: TextStyle(fontSize: 18, color: Colors.white)),
+              ), 
             ],
           ),
         ),
+      ),
       ),
     );
   }

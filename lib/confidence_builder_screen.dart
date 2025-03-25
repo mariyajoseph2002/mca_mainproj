@@ -102,7 +102,8 @@ class _ConfidenceBuilderScreenState extends State<ConfidenceBuilderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Confidence Builder")),
+      appBar: AppBar(title: Text("Confidence Builder"),backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor:  const Color.fromARGB(255, 241, 250, 245),),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -119,6 +120,11 @@ class _ConfidenceBuilderScreenState extends State<ConfidenceBuilderScreen> {
             ),
             SizedBox(height: 10),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 61, 93, 74),
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               onPressed: () => fetchAiChallenges(_struggleController.text),
               child: Text("Get AI Challenges"),
             ),
@@ -141,7 +147,7 @@ class _ConfidenceBuilderScreenState extends State<ConfidenceBuilderScreen> {
           lineHeight: 8.0,
           percent: (currentStep + 1) / challenges.length,
           backgroundColor: Colors.grey[300]!,
-          progressColor: Colors.purpleAccent,
+          progressColor: const Color.fromARGB(255, 14, 7, 143),
           barRadius: Radius.circular(5),
         ),
         SizedBox(height: 10),

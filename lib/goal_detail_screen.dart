@@ -184,7 +184,8 @@ print("Firestore snapshot data: ${snapshot.data()}");
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.goal['title']),
-        backgroundColor: Colors.purpleAccent,
+       backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -275,7 +276,7 @@ if (goalActivities.isNotEmpty)
                 lineWidth: 12.0,
                 percent: (progress / 100).clamp(0.0, 1.0),
                 center: Text("${progress.toInt()}%", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                progressColor: Colors.purpleAccent,
+                progressColor: const Color.fromARGB(255, 17, 118, 68),
                 backgroundColor: Colors.grey[300]!,
                 circularStrokeCap: CircularStrokeCap.round,
                 animation: true,
@@ -304,7 +305,7 @@ if (goalActivities.isNotEmpty)
               child: ElevatedButton(
                 onPressed: markStepCompleted,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
+                  backgroundColor:const Color.fromARGB(255, 17, 118, 68),
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),

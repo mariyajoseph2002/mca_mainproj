@@ -188,7 +188,7 @@ class _CustomerState extends State<Customer> {
       children: [
         UserAccountsDrawerHeader(
           decoration: const BoxDecoration(
-            color: Color.fromARGB(255, 238, 160, 233),
+            color: Color.fromARGB(255, 61, 93, 74),
           ),
           accountName: Text(
             userName,
@@ -228,7 +228,7 @@ class _CustomerState extends State<Customer> {
 
 Widget buildDrawerItem(IconData icon, String title, Widget Function(Widget) pageBuilder) {
   return ListTile(
-    leading: Icon(icon, color: Colors.purple),
+    leading: Icon(icon, color: Color.fromARGB(255, 61, 93, 74)),
     title: Text(title, style: const TextStyle(fontSize: 16)),
     onTap: () {
       Navigator.push(
@@ -255,7 +255,7 @@ Widget buildDrawerItem(IconData icon, String title, Widget Function(Widget) page
               child: CircularProgressIndicator(
                 value: (xp % 100) / 100, // Assuming level up every 100 XP
                 strokeWidth: 8,
-                color: Colors.purple,
+                color: Color.fromARGB(255, 61, 93, 74),
                 backgroundColor: Colors.grey[300],
               ),
             ),
@@ -285,7 +285,7 @@ Widget buildDrawerItem(IconData icon, String title, Widget Function(Widget) page
                 Column(
                   children: [
                     const Text("Current Streak", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text("$streak Days", style: const TextStyle(fontSize: 24, color: Colors.purple, fontWeight: FontWeight.bold)),
+                    Text("$streak Days", style: const TextStyle(fontSize: 24, color: Color.fromARGB(255, 61, 93, 74), fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],
@@ -301,10 +301,11 @@ Widget buildDrawerItem(IconData icon, String title, Widget Function(Widget) page
     return Scaffold(
       appBar: AppBar(
         title: const Text("Customer Dashboard"),
-        backgroundColor: Color.fromARGB(255, 238, 160, 233),
+        backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
       ),
       drawer: buildDrawer(context),
-      body: SingleChildScrollView(
+      body:  SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -324,6 +325,7 @@ Widget buildDrawerItem(IconData icon, String title, Widget Function(Widget) page
           ],
         ),
       ),
+      
     );
   }
 }

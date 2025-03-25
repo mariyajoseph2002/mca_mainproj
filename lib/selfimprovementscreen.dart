@@ -19,7 +19,7 @@ class _SelfImprovementScreenState extends State<SelfImprovementScreen> {
   void initState() {
     super.initState();
     _fetchUserEmail();
-    _initializeChallenges();
+   _assignNewDailyChallenge();
   }
 
   /// Fetches the current user's email
@@ -36,84 +36,56 @@ class _SelfImprovementScreenState extends State<SelfImprovementScreen> {
   }
 
   /// Initializes challenges if the collection doesn't exist
-  Future<void> _initializeChallenges() async {
-    DocumentReference allChallengesRef = FirebaseFirestore.instance
-        .collection('self_care_challenges')
-        .doc('all_challenges');
-
-    DocumentSnapshot doc = await allChallengesRef.get();
-
-    if (!doc.exists) {
-      List<String> challenges = [
-        "Drink 8 glasses of water today.",
-        "Take a 10-minute walk outdoors.",
-        "Write down 3 things you're grateful for.",
-        "Try a 5-minute deep breathing exercise.",
-        "Read 10 pages of a book.",
-        "Spend 30 minutes without your phone.",
-        "Try a new healthy meal today.",
-        "Listen to relaxing music for 10 minutes.",
-        "Stretch for 5 minutes after waking up.",
-        "Compliment yourself in the mirror.",
-        "Write a short journal entry about your day.",
-        "Do a 10-minute guided meditation.",
-        "Get 7+ hours of sleep tonight.",
-        "Watch a funny video and laugh out loud.",
-        "Text a friend and check on them.",
-        "Do a random act of kindness for someone.",
-        "Declutter one small space in your home.",
-        "Try a new hobby or activity for 15 minutes.",
-        "Avoid social media for 1 hour today.",
-        "Take a warm shower or bath to relax."
-      ];
-
-      await allChallengesRef.set({"challenges": challenges});
-      print("✅ Self-care challenges added to Firestore!");
-    }
-
-    _fetchDailyChallenge();
-  }
-
-  /// Fetches a random daily challenge from Firestore
-  Future<void> _fetchDailyChallenge() async {
-    DocumentSnapshot dailyChallengeDoc = await FirebaseFirestore.instance
-        .collection('self_care_challenges')
-        .doc('daily')
-        .get();
-
-    if (dailyChallengeDoc.exists && dailyChallengeDoc.data() != null) {
-      setState(() {
-        _challenge = dailyChallengeDoc['challenge'] ?? "No challenge found!";
-      });
-    } else {
-      await _assignNewDailyChallenge();
-    }
-  }
+  
 
   /// Assigns a new random daily challenge
-  Future<void> _assignNewDailyChallenge() async {
-    DocumentSnapshot allChallengesDoc = await FirebaseFirestore.instance
-        .collection('self_care_challenges')
-        .doc('all_challenges')
-        .get();
+Future<void> _assignNewDailyChallenge() async {
+  DocumentReference dailyChallengeRef = FirebaseFirestore.instance
+      .collection('self_care_challenges')
+      .doc('daily');
 
-    if (allChallengesDoc.exists) {
-      List<dynamic> challenges = allChallengesDoc['challenges'];
-      challenges.shuffle();
-      String newChallenge = challenges.first;
+  DocumentSnapshot dailyDoc = await dailyChallengeRef.get();
 
-      await FirebaseFirestore.instance
-          .collection('self_care_challenges')
-          .doc('daily')
-          .set({"challenge": newChallenge});
+  String todayDate = DateTime.now().toIso8601String().split('T')[0]; // "YYYY-MM-DD"
 
+  if (dailyDoc.exists && dailyDoc.data() != null) {
+    Map<String, dynamic>? data = dailyDoc.data() as Map<String, dynamic>?;
+    String lastUpdated = data?['date'] ?? '';
+
+    // If today's challenge is already set, do nothing
+    if (lastUpdated == todayDate) {
       setState(() {
-        _challenge = newChallenge;
+        _challenge = data?['challenge'] ?? "No challenge found!";
       });
-
-      print("🎯 New daily challenge assigned: $newChallenge");
+      print("✅ Today's challenge is already assigned.");
+      return;
     }
   }
+
+  // Fetch all challenges
+  DocumentSnapshot allChallengesDoc = await FirebaseFirestore.instance
+      .collection('self_care_challenges')
+      .doc('all_challenges')
+      .get();
+
+  if (allChallengesDoc.exists) {
+    List<dynamic> challenges = allChallengesDoc['challenges'];
+    challenges.shuffle();
+    String newChallenge = challenges.first;
+
+    await dailyChallengeRef.set({
+      "challenge": newChallenge,
+      "date": todayDate, // Store the assigned date
+    });
+
+    setState(() {
+      _challenge = newChallenge;
+    });
+
+    print("🎯 New daily challenge assigned: $newChallenge");
+  }
+}
+
 
   /// Updates XP and Streak when the user completes a challenge
 Future<void> _completeChallenge() async {
@@ -172,26 +144,19 @@ Future<void> _completeChallenge() async {
     return Scaffold(
       appBar: AppBar(
         title: Text("Self-Improvement Challenges"),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.deepPurpleAccent, Colors.purple],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245),
         elevation: 5,
       ),
       drawer: widget.drawer,
       body: Container(
-        decoration: BoxDecoration(
+        /* decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.purple.shade200, Colors.purple.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-        ),
+        ), */
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -203,7 +168,7 @@ Future<void> _completeChallenge() async {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Color.fromARGB(255, 61, 93, 74),
                   ),
                 ),
                 SizedBox(height: 20),
@@ -220,7 +185,7 @@ Future<void> _completeChallenge() async {
                       style: TextStyle(
                         fontSize: 20,
                         fontStyle: FontStyle.italic,
-                        color: Colors.black87,
+                        color: Color.fromARGB(255, 61, 93, 74),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -232,10 +197,10 @@ Future<void> _completeChallenge() async {
                   icon: Icon(Icons.check_circle, color: Colors.white),
                   label: Text(
                     "✅ Mark as Completed",
-                    style: TextStyle(fontSize: 18),
+                    style: TextStyle(fontSize: 18,color: Color.fromARGB(255, 149, 206, 172)),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Color.fromARGB(255, 61, 93, 74),
                     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

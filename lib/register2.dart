@@ -90,7 +90,7 @@ void _nextStep() {
                         child: ElevatedButton(
                           onPressed: _nextStep,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor:Color.fromARGB(255, 61, 93, 74),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
                           ),
@@ -110,7 +110,7 @@ void _nextStep() {
     return [
       const Text(
         "Welcome to HealPal!",
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 61, 93, 74)),
       ),
       const SizedBox(height: 10),
       const Text("Tell us a bit about yourself to personalize your experience.", style: TextStyle(fontSize: 16)),
@@ -151,7 +151,7 @@ void _nextStep() {
   return [
     Text(
       _questions[_currentStep - 1],
-      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 61, 93, 74)),
     ),
     const SizedBox(height: 20),
 

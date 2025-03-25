@@ -121,19 +121,19 @@ await Future.delayed(Duration(seconds: 2)); // Wait 2 seconds before sending the
     return Scaffold(
       appBar: AppBar(
         title: Text("Medical Records"),
-        backgroundColor: Color(0xFF8E44AD), // Purple theme
+       backgroundColor:Color.fromARGB(255, 61, 93, 74),
+        foregroundColor: const Color.fromARGB(255, 241, 250, 245), // Purple theme
         elevation: 5,
       ),
       drawer: widget.drawer,
       body: Container(
-        decoration: BoxDecoration(
+        /* decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF9B59B6), Color(0xFF8E44AD)],
+            colors: [const Color.fromARGB(255, 90, 188, 124),const Color.fromARGB(255, 27, 75, 49),],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-        ),
-        child: Column(
+        ), */child: Column(
           children: [
             SizedBox(height: 16),
 
@@ -213,7 +213,7 @@ await Future.delayed(Duration(seconds: 2)); // Wait 2 seconds before sending the
       label: Text(label, style: TextStyle(fontSize: 16, color: Colors.white)),
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFD35400),
+        backgroundColor: Color.fromARGB(255, 95, 180, 132),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
