@@ -103,12 +103,12 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 61, 93, 74),
+                  backgroundColor:Color.fromARGB(255, 61, 93, 74),
                   padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               onPressed: saveGoal,
-              child: Text("Save Goal"),
+              child: Text("Save Goal",style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

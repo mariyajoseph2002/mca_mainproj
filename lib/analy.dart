@@ -42,6 +42,9 @@ class _AnalysisPageState extends State<AnalysisPage> {
 
   return (sadNumbCount / _journalEntries.length) * 100;
 }
+
+
+/* 
  Future<int> _predictDepressionRisk() async {
   if (_journalEntries.isEmpty) return 0;
 
@@ -49,6 +52,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
     //(_journalEntries.first['mood'] ?? 0) / 3.0,  
     (_journalEntries.first['mood'] ?? 0).toDouble(),  
     (_journalEntries.first['social_interaction'] ?? 0).toDouble(),
+    (_journalEntries.first['appetite'] ?? 0).toDouble(),
+     (_journalEntries.first['sleep_quality'] ?? 0).toDouble(),
     (_journalEntries.first['work_productivity'] ?? 0).toDouble(),
     (_journalEntries.first['hobbies_selfcare'] ?? 0).toDouble(),
     (_journalEntries.first['emotional_triggers'] ?? 0).toDouble(),
@@ -69,6 +74,36 @@ class _AnalysisPageState extends State<AnalysisPage> {
   return riskLevel;
 }
 
+ */
+
+Future<int> _predictDepressionRisk() async {
+  if (_journalEntries.isEmpty) return 0;
+
+  double moodTrend = _calculateSadNumbPercentage() / 100.0; // Extract mood trend
+
+  DepressionRiskPredictor predictor = DepressionRiskPredictor();
+  await predictor.loadModel();
+
+  // Standardize ONLY the mood trend before prediction
+  double standardizedMoodTrend = predictor.standardizeMoodTrend(moodTrend);
+
+  List<double> input = [
+    (_journalEntries.first['mood'] ?? 0).toDouble(),  
+    (_journalEntries.first['social_interaction'] ?? 0).toDouble(),
+    (_journalEntries.first['appetite'] ?? 0).toDouble(),
+    (_journalEntries.first['sleep_quality'] ?? 0).toDouble(),
+    (_journalEntries.first['work_productivity'] ?? 0).toDouble(),
+    (_journalEntries.first['hobbies_selfcare'] ?? 0).toDouble(),
+    (_journalEntries.first['emotional_triggers'] ?? 0).toDouble(),
+    standardizedMoodTrend, // Use standardized mood trend
+  ];
+
+  var inputBuffer = Float32List.fromList(input);
+  int riskLevel = predictor.predict(inputBuffer);
+  predictor.dispose();
+
+  return riskLevel;
+}
 
   Future<void> _fetchJournalEntries() async {
     if (_userEmail == null) return;
@@ -88,6 +123,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
             'date': data['date'].toDate(),
             'mood': data['mood'],
             'social_interaction': data['social_interaction'],
+            'sleep_quality': data['sleep_quality'],
+            'appetite': data['appetite'],
             'work_productivity': data['work_productivity'],
             'hobbies_selfcare': data['hobbies_selfcare'],
             'emotional_triggers': data['emotional_triggers'],
@@ -104,17 +141,18 @@ class _AnalysisPageState extends State<AnalysisPage> {
   String _getSuggestedAction(int riskLevel) {
   switch (riskLevel) {
     case 0:
-      return "Keep up healthy habits; maintain social interactions.";
+      return "You're doing great! Keep up your healthy habits and stay connected with loved ones. 🌿💙";
     case 1:
-      return "Suggest engaging in hobbies/self-care; check in with close friends.";
+      return "It might help to engage in activities you enjoy—maybe some self-care or time with close friends? 😊🎨";
     case 2:
-      return "AI prompts for journaling reflection; soft nudge to reach out for help.";
+      return "Take a moment to reflect on your feelings. Journaling might help! If you're feeling overwhelmed, reaching out to someone you trust can make a big difference. 💌✨";
     case 3:
-      return "Recommend professional therapy; emergency support (if extreme cases).";
+      return "You're not alone! It might be helpful to talk to a professional who can guide you. If things feel really tough, consider reaching out to a trusted friend or support service. 💙🤝";
     default:
-      return "No action suggested.";
+      return "Stay kind to yourself—every step matters. 🌸";
   }
 }
+
 
   // Calculate average mood score
 double _calculateAverageMood() {
@@ -188,11 +226,11 @@ Widget build(BuildContext context) {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+              /*   const Text(
                   "📅 Recent Entries",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
+                ), */
+                /* const SizedBox(height: 16),
                 ..._journalEntries.take(5).map((entry) {
                   return Card(
                     margin: const EdgeInsets.only(bottom: 10),
@@ -208,7 +246,7 @@ Widget build(BuildContext context) {
                       ),
                     ),
                   );
-                }).toList(),
+                }).toList(), */
                 const SizedBox(height: 24),
                 FutureBuilder<int>(
                   future: _predictDepressionRisk(),
@@ -222,10 +260,10 @@ Widget build(BuildContext context) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                         /*  Text(
                             "Depression Risk Level: $riskLevel",
                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
+                          ), */
                           const SizedBox(height: 16),
                           Text(
                             "Suggested Action: ${_getSuggestedAction(riskLevel)}",
@@ -243,8 +281,32 @@ Widget build(BuildContext context) {
 }
 
 }
+class DepressionRiskPredictor {
+  late Interpreter _interpreter;
 
+  Future<void> loadModel() async {
+    _interpreter = await Interpreter.fromAsset('assets/depression_model.tflite');
+  }
 
+  // Standardize ONLY Mood Trend
+  double standardizeMoodTrend(double moodTrend) {
+    double mean = 41.05714286; // Replace with actual mean from training
+    double std = 17.76331923;  // Replace with actual std from training
+    return (moodTrend - mean) / std;
+  }
+
+  int predict(Float32List input) {
+    var output = Float32List(4).reshape([1, 4]);
+    _interpreter.run(input, output);
+    return output[0].indexOf(output[0].reduce((double a,double b) => a > b ? a : b));
+  }
+
+  void dispose() {
+    _interpreter.close();
+  }
+}
+
+/* 
 class DepressionRiskPredictor {
   late Interpreter _interpreter;
 
@@ -252,8 +314,8 @@ class DepressionRiskPredictor {
     _interpreter = await Interpreter.fromAsset('assets/depression_model.tflite');
   }
    List<double> standardizeInput(List<double> inputValues) {
-    List<double> means = [1.76585776 ,0.84334455 ,1.10908217 ,0.39572321 ,0.87121576 ,0.6230441 ];  // Replace with actual values
-    List<double> stds =  [1.01825344, 0.82384873, 0.86740826, 0.48900547 ,1.02702217, 0.26236678];  // Replace with actual values
+    List<double> means =   [41.05714286]; // Replace with actual values
+    List<double> stds = [17.76331923] ;  // Replace with actual values
 
     List<double> scaledInput = [];
     for (int i = 0; i < inputValues.length; i++) {
@@ -281,3 +343,4 @@ class DepressionRiskPredictor {
     _interpreter.close();
   }
 }
+ */

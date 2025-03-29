@@ -505,6 +505,14 @@ class MyApp extends StatelessWidget {
           }
         },
       ),
+      routes: {
+        '/customer': (context) => const Customer(),
+        '/login': (context) => const LoginPage(),
+        // Add other routes used in your drawer navigation
+        //'/journals': (context) => DailyJournalsPage(drawer: buildDrawer(context)),
+        //'/goals': (context) => GoalListScreen(drawer: buildDrawer(context)),
+        // Add more routes as needed
+      },
          );
   }
 }

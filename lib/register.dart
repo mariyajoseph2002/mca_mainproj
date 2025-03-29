@@ -203,7 +203,7 @@ Widget build(BuildContext context) {
                         child: ElevatedButton(
                           onPressed: _nextStep,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 178, 153, 222),
+                            backgroundColor:  Color.fromARGB(255, 61, 93, 74),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
@@ -227,7 +227,7 @@ Widget build(BuildContext context) {
     return [
       const Text(
         "Welcome to HealPal!",
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color:  Color.fromARGB(255, 61, 93, 74)),
       ),
       const SizedBox(height: 10),
       const Text("Tell us a bit about yourself to personalize your experience.", style: TextStyle(fontSize: 16)),
@@ -262,7 +262,7 @@ Widget build(BuildContext context) {
     return [
       Text(
         _questions[_currentStep - 1],
-        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color:  Color.fromARGB(255, 61, 93, 74)),
       ),
       const SizedBox(height: 20),
       if (_currentStep == 1) _buildDropdown(['Female', 'Male', 'Other'], selectedGender, (value) => setState(() => selectedGender = value!)),

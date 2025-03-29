@@ -126,7 +126,7 @@ class _ConfidenceBuilderScreenState extends State<ConfidenceBuilderScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               onPressed: () => fetchAiChallenges(_struggleController.text),
-              child: Text("Get AI Challenges"),
+              child: Text("Get AI Challenges",style: TextStyle(color: Colors.white),),
             ),
             SizedBox(height: 20),
             if (isLoading) Center(child: CircularProgressIndicator()),

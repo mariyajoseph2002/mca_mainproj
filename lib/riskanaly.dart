@@ -64,7 +64,7 @@ class _MentalHealthAssessmentWidgetState extends State<MentalHealthAssessmentWid
       ];
 
       int totalScore = 0;
-      Map<String, int> fieldScores = {for (var field in fields) field: 0};
+      /* Map<String, int> fieldScores = {for (var field in fields) field: 0};
 
       // Calculate total score and individual category scores
       for (var doc in journalSnapshot.docs) {
@@ -93,7 +93,62 @@ class _MentalHealthAssessmentWidgetState extends State<MentalHealthAssessmentWid
       } else {
         riskLevel = "Self-care time ❤️";
         riskColor = Colors.red.shade400;
-      }
+      } */
+     // Step 1: Organize entries by date
+Map<String, Map<String, int>> dailyScores = {};
+Set<String> uniqueDates = {}; 
+
+for (var doc in journalSnapshot.docs) {
+  Map<String, dynamic> entry = doc.data() as Map<String, dynamic>;
+  String date = (entry["date"] as Timestamp).toDate().toString().split(" ")[0]; // Extract YYYY-MM-DD
+
+  uniqueDates.add(date); // Track unique dates
+
+  if (!dailyScores.containsKey(date)) {
+    dailyScores[date] = {for (var field in fields) field: 0};
+  }
+
+  for (var field in fields) {
+    if (entry.containsKey(field)) {
+      dailyScores[date]![field] = (dailyScores[date]![field] ?? 0) + (entry[field] as int);
+    }
+  }
+}
+
+// Step 2: Compute daily averages
+// Step 2: Compute daily averages (Corrected)
+int totalDays = uniqueDates.length;
+Map<String, double> averagedScores = {for (var field in fields) field: 0.0};
+
+for (var date in dailyScores.keys) {
+  for (var field in fields) {
+    averagedScores[field] = (averagedScores[field]! + dailyScores[date]![field]!); // Just summing up first
+  }
+}
+
+// Divide once after summing
+for (var field in fields) {
+  averagedScores[field] = averagedScores[field]! / totalDays;
+}
+
+// Step 3: Compute final total score based on daily averages
+double totalAverageScore = averagedScores.values.fold(0.0, (a, b) => a + b);
+
+// Step 4: Adjust risk level calculation based on daily average score
+String riskLevel;
+Color riskColor;
+print(totalAverageScore);
+if (totalAverageScore <= 1.0) {
+  riskLevel = "You're doing great! 🌿";
+  riskColor = Colors.green.shade400;
+} else if (totalAverageScore <= 2.5) {
+  riskLevel = "Hang in there! ☀️";
+  riskColor = Colors.orange.shade400;
+} else {
+  riskLevel = "Self-care time ❤️";
+  riskColor = Colors.red.shade400;
+}
+
 
       // Fetch user's hobbies, self-care activities, and close contacts
      QuerySnapshot userSnapshot = await firestore
@@ -129,46 +184,54 @@ DocumentSnapshot userDoc = userSnapshot.docs.first;
         }
       }
       // Generate personalized recommendations
-      List<Map<String, String>> recommendations = [];
+      // Generate personalized recommendations
+List<Map<String, String>> recommendations = [];
 
-       if ((fieldScores["social_interaction"] ?? 0) <= 2) {
-        recommendations.add({
-          "icon": "🤗",
-          "text":
-              "Try socializing with family or friends. Even small interactions can uplift your mood!"
-        });
-      }
+// Social interaction recommendation
+if ((averagedScores["social_interaction"] ?? 0) <= 1.5) {  // Adjusted for average
+  recommendations.add({
+    "icon": "🤗",
+    "text":
+        "Try socializing with family or friends. Even small interactions can uplift your mood!"
+  });
+}
 
-      if ((fieldScores["hobbies_selfcare"] ?? 0) <= 2 && hobbies.isNotEmpty) {
-        recommendations.add({
-          "icon": "🎨",
-          "text":
-              "It's been a while since you engaged in **${hobbies.join(", ")}**. Try making time for them!"
-        });
-      }
+// Hobbies & self-care recommendation
+if ((averagedScores["hobbies_selfcare"] ?? 0) <= 1.5 && hobbies.isNotEmpty) {  // Adjusted for average
+  recommendations.add({
+    "icon": "🎨",
+    "text":
+        "It's been a while since you engaged in **${hobbies.join(", ")}**. Try making time for them!"
+  });
+}
 
-       if ((fieldScores["sleep_quality"] ?? 0) >= 3) {
-        recommendations.add({
-          "icon": "😴",
-          "text":
-              "Your sleep quality seems low. Try reducing screen time, drinking herbal tea, or relaxation techniques."
-        });
-      }
+// Sleep quality recommendation
+if ((averagedScores["sleep_quality"] ?? 0) >= 2.5) {  // Adjusted for average
+  recommendations.add({
+    "icon": "😴",
+    "text":
+        "Your sleep quality seems low. Try reducing screen time, drinking herbal tea, or relaxation techniques."
+  });
+}
 
-      if (totalScore >= 8 && closeContacts.isNotEmpty) {
-        recommendations.add({
-          "icon": "💙",
-          "text":
-              "Consider reaching out to **${closeContacts.first}** for support. Talking to a trusted person can help!"
-        });
-      }
-  if (consecutiveLowMoods >= 3) {
-        recommendations.add({
-          "icon": "📝",
-          "text":
-              "You've been feeling down for the last few days. Consider journaling your thoughts or reaching out for professional guidance."
-        });
-      }
+// Emotional support recommendation
+if (totalAverageScore >= 6.0 && closeContacts.isNotEmpty) {  // Adjusted for total avg
+  recommendations.add({
+    "icon": "💙",
+    "text":
+        "Consider reaching out to **${closeContacts.first}** for support. Talking to a trusted person can help!"
+  });
+}
+
+// Consecutive low moods recommendation
+if (consecutiveLowMoods >= 3) {
+  recommendations.add({
+    "icon": "📝",
+    "text":
+        "You've been feeling down for the last few days. Consider journaling your thoughts or reaching out for professional guidance."
+  });
+}
+
 
     setState(() {
         _riskLevel = riskLevel;
@@ -267,3 +330,4 @@ DocumentSnapshot userDoc = userSnapshot.docs.first;
   }
 
 }
+ 
