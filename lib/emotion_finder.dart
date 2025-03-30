@@ -231,16 +231,16 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
     super.initState();
     _loadModel();
     _loadTokenizer();
-    requestMicrophonePermission(); 
+   // requestMicrophonePermission(); 
    // initSpeech();
   }
 
-  Future<void> requestMicrophonePermission() async {
+ /*  Future<void> requestMicrophonePermission() async {
     var status = await Permission.microphone.request();
     if (status.isDenied) {
       print("Microphone permission denied");
     }
-  }
+  } */
 
   Future<void> _loadModel() async {
     try {
@@ -260,13 +260,13 @@ class _EmotionFinderScreenState extends State<EmotionFinderScreen> {
     }
   }
 
-/*   void initSpeech() async {
+  /*  void initSpeech() async {
     bool available = await _speech.initialize();
     if (!available) {
       print("Speech recognition not available");
     }
-  } */
-/* 
+  } 
+
   void _startListening() async {
     if (!_speech.isAvailable) return;
 
@@ -464,10 +464,10 @@ Future<void> _checkInFeedback(bool isHelpful) async {
         backgroundColor:Color.fromARGB(255, 61, 93, 74),
         foregroundColor: const Color.fromARGB(255, 241, 250, 245),
         actions: [
-          /* IconButton(
+         /* IconButton(
             icon: Icon(_isListening ? Icons.mic_off : Icons.mic, size: 28),
             onPressed: _isListening ? _stopListening : _startListening,
-          ), */
+          ),  */
         ],
       ),
       body: SingleChildScrollView(child: 
@@ -485,8 +485,13 @@ Future<void> _checkInFeedback(bool isHelpful) async {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor:Color.fromARGB(255, 61, 93, 74),
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               onPressed: _analyzeEmotion,
-              child: const Text("Find Emotion"),
+              child: const Text("Find Emotion",style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(height: 20),
             if (_predictedEmotion != null) ...[
@@ -497,7 +502,7 @@ Future<void> _checkInFeedback(bool isHelpful) async {
             if (_recommendation != null) ...[
               Text("✨ Affirmation: ${_recommendation!['affirmation'] ?? ''}", style: TextStyle(fontSize: 16)),
               Text("🧘 Self-Care Tip: ${_selfCareTip ?? 'Fetching tip...'}", style: TextStyle(fontSize: 16)),
-              Text("📝 Journaling Prompt: ${_recommendation!['journaling_prompt'] ?? ''}", style: TextStyle(fontSize: 16)),
+              //Text("📝 Journaling Prompt: ${_recommendation!['journaling_prompt'] ?? ''}", style: TextStyle(fontSize: 16)),
               Text("🎯 Suggested Goal: ${_recommendation!['suggested_goal'] ?? ''}", style: TextStyle(fontSize: 16)),
               Text("🔥 Daily Challenge: ${_recommendation!['daily_challenge'] ?? ''}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),

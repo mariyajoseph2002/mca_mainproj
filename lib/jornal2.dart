@@ -170,75 +170,7 @@ class _DailyJournalsPageState extends State<DailyJournalsPage> {
 
   ];
 
-  /// Saves each response **immediately** to Firestore
-/*   Future<void> _saveAnswer(String field, int value) async {
-    if (_userEmail == null) return;
-
-    DateTime today = DateTime.now();
-    String formattedDate = "${today.year}-${today.month}-${today.day}";
-     DocumentSnapshot journalDoc = await FirebaseFirestore.instance
-      .collection('journals')
-      .doc("$_userEmail-$formattedDate")
-      .get();
-
-  if (journalDoc.exists) {
-    // If a journal entry exists, show a message and return
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("You have already completed today's journal.")),
-    );
-    return;
-  }
-
-    DocumentReference journalRef = FirebaseFirestore.instance
-        .collection('journals')
-        .doc("$_userEmail-$formattedDate");
-
-    await journalRef.set(
-      {
-        'user_email': _userEmail,
-        'date': today,
-        field: value,
-      },
-      SetOptions(merge: true), // Merge ensures previous answers aren't lost
-    );
-  }
-
-  void _selectAnswer(String answer) async {
-    String field = _questions[_currentQuestionIndex]['field'];
-    int value = _questions[_currentQuestionIndex]['options'][answer];
-
-    await _saveAnswer(field, value);
-
-    setState(() {
-      if (_currentQuestionIndex < _questions.length - 1) {
-        _currentQuestionIndex++;
-      } else {
-        _showCompletionMessage();
-      }
-    });
-  }
-
-  void _showCompletionMessage() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("✅ Journal Completed"),
-        content: const Text("Your responses have been saved successfully!"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _currentQuestionIndex = 0;
-              });
-            },
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
- */
+  
 Future<void> _saveAnswer(String field, int value) async {
   if (_userEmail == null) return;
 
@@ -408,34 +340,50 @@ void _showCompletionMessage() {
     _showJournalEntry(journalData);
   }
 
-  void _showJournalEntry(Map<String, dynamic> journalData) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("📖 Journal Entry"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: _questions.map((q) {
-            int value = journalData[q['field']] ?? 0;
-            String selectedOption = q['options'].keys.firstWhere(
-              (key) => q['options'][key] == value,
-              orElse: () => "Unknown",
-            );
-            return ListTile(
-              title: Text(q['question']),
-              subtitle: Text(selectedOption),
-            );
-          }).toList(),
+void _showJournalEntry(Map<String, dynamic> journalData) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("📖 Journal Entry"),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7, // 70% of screen height
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Close"),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _questions.map((q) {
+              int value = journalData[q['field']] ?? 0;
+              String selectedOption = q['options'].keys.firstWhere(
+                (key) => q['options'][key] == value,
+                orElse: () => "Unknown",
+              );
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(vertical: 4), // Reduce padding
+                dense: true, // Make tiles more compact
+                title: Text(
+                  q['question'],
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                subtitle: Text(
+                  selectedOption,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              );
+            }).toList(),
           ),
-        ],
+        ),
       ),
-    );
-  }
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Close"),
+        ),
+      ],
+      insetPadding: const EdgeInsets.all(20), // Add space around dialog
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

@@ -8,23 +8,19 @@ import 'notification_service.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
-
 DateTime? parseFollowUpDate(String dateStr) {
   try {
-    // Try parsing with the expected format
     return DateFormat("dd-MM-yyyy").parse(dateStr);
   } catch (e) {
-    print("❌ Error parsing follow-up date: $dateStr. Trying alternative format...");
-
-    // Try parsing with another common format
     try {
       return DateFormat("yyyy-MM-dd").parse(dateStr);
     } catch (e) {
-      print("❌ Failed alternative parsing for follow-up date: $dateStr");
-      return null; // Return null if parsing fails
+      return null;
     }
   }
-}class OCRService {
+}
+
+class OCRService {
   final ImagePicker _picker = ImagePicker();
   final TextRecognizer _textRecognizer = TextRecognizer();
 
@@ -38,257 +34,310 @@ DateTime? parseFollowUpDate(String dateStr) {
     final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
     return recognizedText.text;
   }
-  void dispose() {
-    _textRecognizer.close(); // ✅ Proper cleanup
-  }
+
+  void dispose() => _textRecognizer.close();
 
   Future<String> convertImageToBase64(File image) async {
     List<int> imageBytes = await image.readAsBytes();
     return base64Encode(imageBytes);
   }
 
-  /// 📌 Identify if it's a Medical Record or a Check-Up Record
   bool isCheckupRecord(String text) {
-   final checkupKeywords = ['cholesterol', 'glucose', 'blood pressure', 'medical lab', 'test results'];
-  return checkupKeywords.any((keyword) => text.toLowerCase().contains(keyword));
+    final checkupKeywords = [
+      'cholesterol', 'glucose', 'blood pressure',
+      'medical lab', 'test results', 'laboratory report'
+    ];
+    return checkupKeywords.any((keyword) => text.toLowerCase().contains(keyword));
   }
 
-  /// 📌 Extract Check-Up Data (Cholesterol, Blood Glucose, etc.)
-Map<String, dynamic> extractCheckupDetails(String text) {
-  Map<String, dynamic> checkupData = {};
+  Map<String, dynamic> extractCheckupDetails(String text) {
+    Map<String, dynamic> checkupData = {};
 
-  // Extract Sample Received Date
-  RegExp sampleDateRegex = RegExp(r"Sample Received On\s*:\s*([\d-]+ \d+:\d+ [AP]M)");
-  if (sampleDateRegex.hasMatch(text)) {
-    checkupData["sample_received"] = sampleDateRegex.firstMatch(text)!.group(1);
+    // Enhanced Field Extraction
+    RegExp testNameRegex = RegExp(r"Test Name\s*[:\.]\s*(.+)", caseSensitive: false);
+    RegExp observedValueRegex = RegExp(r"Observed Value\s*[:\.]\s*(.+)", caseSensitive: false);
+  RegExp glucoseRegex = RegExp(
+    r"Blood\s*Glucose\s*(?:\(.*\))?\s*[:]?[\s\S]*?(\d+)\s*mg/dL",
+    caseSensitive: false
+  );
+   RegExp cholesterolRegex = RegExp(
+    r"Total\s*Cholesterol\s*[:]?[\s\S]*?(\d+)\s*mg/dL",
+    caseSensitive: false
+  );
+    RegExp bpRegex = RegExp(r"Blood Pressure\s*[:\.]?\s*(\d+/\d+)", caseSensitive: false);
+    RegExp dateRegex =RegExp(r"(Sample Received On|Report Released On)\s+(\d{2}-[A-Za-z]{3}-\d{4})", caseSensitive: false);
+
+    checkupData = {
+      "test_name": testNameRegex.firstMatch(text)?.group(1)?.trim() ?? "General Checkup",
+      "observed_value": observedValueRegex.firstMatch(text)?.group(1)?.trim() ?? "Not available",
+      "blood_glucose": glucoseRegex.firstMatch(text)?.group(1) ?? "Not detected",
+      "cholesterol": cholesterolRegex.firstMatch(text)?.group(1) ?? "Not detected",
+      "blood_pressure": bpRegex.firstMatch(text)?.group(1) ?? "Not available",
+      "sample_date": dateRegex.firstMatch(text)?.group(1) ?? DateFormat("dd-MM-yyyy").format(DateTime.now()),
+    };
+      // Extract with debug logging
+  print("==== CHECKUP EXTRACTION DEBUG ====");
+  _logAndExtract(text, glucoseRegex, "Blood Glucose", checkupData);
+  _logAndExtract(text, cholesterolRegex, "Cholesterol", checkupData);
+  print("==================================");
+    return checkupData;
   }
-
-  // Extract Blood Glucose
-  RegExp glucoseRegex = RegExp(r"Blood Glucose \(Random\)\s+(\d+)\s*mg/dL");
-  if (glucoseRegex.hasMatch(text)) {
-    checkupData["blood_glucose"] = glucoseRegex.firstMatch(text)!.group(1);
+  void _logAndExtract(String text, RegExp pattern, String label, Map<String, dynamic> data) {
+  Match? match = pattern.firstMatch(text);
+  if (match != null) {
+    print("✅ $label MATCH: ${match.group(0)}");
+    data[label.toLowerCase().replaceAll(' ', '_')] = match.group(1);
+  } else {
+    print("❌ $label NOT FOUND");
+    print("Scanned Text Snippet:\n${text.substring(0, 500)}..."); // First 500 chars
   }
-
-  // Extract Total Cholesterol
-  RegExp cholesterolRegex = RegExp(r"Total Cholesterol\s+(\d+)\s*mg/dL");
-  if (cholesterolRegex.hasMatch(text)) {
-    checkupData["cholesterol"] = cholesterolRegex.firstMatch(text)!.group(1);
-  }
-
-  // Extract Blood Pressure (Format: 120/80 mmHg or 120/80)
-  RegExp bpRegex = RegExp(r"Blood Pressure\s*[:\s]+(\d+/\d+)");
-  if (bpRegex.hasMatch(text)) {
-    checkupData["blood_pressure"] = bpRegex.firstMatch(text)!.group(1);
-  }
-
-  return checkupData;
 }
 
+  /* Map<String, dynamic> extractMedicalRecord(String text) {
+    print('\n\n==== RAW OCR TEXT START ====');
+    print(text);
+    print('==== RAW OCR TEXT END ====\n\n');
+    Map<String, dynamic> medicalData = {
+      "doctor_name": "",
+      "contact": "",
+      "diagnosis": "",
+      "follow_up_date": "",
+      "instructions": "",
+      "medications": [],
+    };
+    RegExp adviceRegex = RegExp(
+    r"(Advice|Instructions)\s*[:]?\s*(.+?)(?=\n\w+:|$)",
+    caseSensitive: false,
+    dotAll: true
+  );
+  if (adviceRegex.hasMatch(text)) {
+    medicalData["instructions"] = adviceRegex.firstMatch(text)!.group(2)!.trim();
+  }
 
-  /// 📌 Extract Medical Record (Generic Text)
-  Map<String, dynamic> extractMedicalRecord(String text) {
-    String doctorName = "";
-  String contact = "";
-  String diagnosis = "";
-  String followUpDate = "";
-  String instructions = "";
-  List<Map<String, String>> medications = [];
 
-  List<String> lines = text.split("\n");
+    RegExp doctorRegex = RegExp(r"(Dr\..+?)(?=\n|$)");
+    RegExp contactRegex = RegExp(r"Ph(one)?\s*[:\.]?\s*([+\d- ]+)");
+    RegExp diagnosisRegex = RegExp(r"Diagnosis\s*[:\.]\s*(.+)");
+    RegExp followUpRegex = RegExp(r"(Follow[-\s]?Up|Next[-\s]?Appointment)\s*[:\.]?\s*(\d{2}-\d{2}-\d{4})");
+    //RegExp medicationRegex = RegExp(r"(TAB|CAP)\.\s+(.+?)\s+-\s+(.+?)\s+-\s+(.+)");
+    final medRegex = RegExp(
+    r'(TAB|CAP)\.\s+([^\n]+?)\s+-\s+([^\n]+?)\s+-\s+([^\n]+?)(?=\n|$)',
+    caseSensitive: false,
+    multiLine: true
+  );
 
+
+    medicalData["doctor_name"] = doctorRegex.firstMatch(text)?.group(1)?.trim() ?? "Unknown Doctor";
+    medicalData["contact"] = contactRegex.firstMatch(text)?.group(2)?.trim() ?? "N/A";
+    medicalData["diagnosis"] = diagnosisRegex.firstMatch(text)?.group(1)?.trim() ?? "Not specified";
+    
+    var followUpMatch = followUpRegex.firstMatch(text);
+    if (followUpMatch != null) {
+      medicalData["follow_up_date"] = followUpMatch.group(2) ?? "";
+    }
+
+    // Medication Extraction
+    /* medicationRegex.allMatches(text).forEach((match) {
+      medicalData["medications"].add({
+        "type": match.group(1),
+        "name": match.group(2)?.trim(),
+        "dosage": match.group(3)?.trim(),
+        "duration": match.group(4)?.trim(),
+      });
+    }); */
+  text.split('\n').forEach((line) {
+    final medMatch = medRegex.firstMatch(line);
+    if (medMatch != null) {
+      medicalData["medications"].add({
+        'type': medMatch.group(1) ?? '',
+        'name': medMatch.group(2)?.trim() ?? '',
+        'dosage': medMatch.group(3)?.trim() ?? '',
+        'duration': medMatch.group(4)?.trim() ?? '',
+      });
+    }
+  });
+
+    return medicalData;
+  }
+ */
+Map<String, dynamic> extractMedicalRecord(String text) {
+  // Keep the debug logging
+  print('\n\n==== RAW OCR TEXT START ====');
+  print(text);
+  print('==== RAW OCR TEXT END ====\n\n');
+
+  // Initialize all fields with empty values
+  Map<String, dynamic> medicalData = {
+    "doctor_name": "",
+    "contact": "",
+    "diagnosis": "",
+    "follow_up_date": "",
+    "instructions": "",
+    "medications": [],
+  };
+
+  // Use your original working variables
   List<String> medicineNames = [];
   List<String> dosages = [];
   List<String> durations = [];
+  
+  // Enhanced regex patterns from your original working code
+  RegExp dosageRegex = RegExp(
+    r"(\d+\s*(Morning|Night|Afternoon|Evening|Times|Once|Twice|Day|Days))", 
+    caseSensitive: false
+  );
+  
+  RegExp durationRegex = RegExp(
+    r"(\d+\s*(Days|Weeks|Months))", 
+    caseSensitive: false
+  );
 
-  RegExp dosageRegex = RegExp(r"(\d+\s*(Morning|Night|Afternoon|Evening|Times|Once|Twice))", caseSensitive: false);
-  RegExp durationRegex = RegExp(r"(\d+\s*Days)", caseSensitive: false);
+  // Process each line as in original working code
+  List<String> lines = text.split('\n');
+  for (String rawLine in lines) {
+    String line = rawLine.trim();
 
-  for (int i = 0; i < lines.length; i++) {
-    String line = lines[i].trim();
-
-    // Extract Doctor Name
-    if (line.toLowerCase().contains("dr.") && doctorName.isEmpty) {
-      doctorName = line;
+    // Doctor Name (original logic)
+    if (line.toLowerCase().contains("dr.") && medicalData["doctor_name"]!.isEmpty) {
+      medicalData["doctor_name"] = line;
     }
 
-    // Extract Contact Information
+    // Contact Info (original logic)
     if (line.toLowerCase().contains("ph") || line.toLowerCase().contains("mob")) {
-      contact = line.replaceAll(RegExp(r"[^0-9+]"), "");
+      medicalData["contact"] = line.replaceAll(RegExp(r"[^0-9+]"), "");
     }
 
-    // Extract Diagnosis
+    // Diagnosis (original logic)
     if (line.toLowerCase().contains("diagnosis:")) {
-      diagnosis = line.split(":").last.trim();
+      medicalData["diagnosis"] = line.split(":").last.trim();
     }
 
-    // Extract Follow-up Date
-   RegExp followUpRegex = RegExp(
-  r"(Follow[-\s]?Up|Next[-\s]?Appointment|Scheduled on):?\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})",
-  caseSensitive: false,
-);
-
-    if (followUpRegex.hasMatch(line)) {
-      followUpDate = followUpRegex.firstMatch(line)!.group(1) ?? "";
+    // Follow-up Date (improved version)
+    RegExp followUpRegex = RegExp(
+      r"Follow[\s-]*Up[\s:]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{4})", 
+      caseSensitive: false
+    );
+    if (medicalData["follow_up_date"]!.isEmpty) {
+      var match = followUpRegex.firstMatch(line);
+      if (match != null) {
+        medicalData["follow_up_date"] = match.group(1) ?? "";
+      }
     }
 
-    // Extract Instructions
+    // Instructions (original logic)
     if (line.toLowerCase().contains("advice") || line.toLowerCase().contains("instructions")) {
-      instructions = line.split(":").last.trim();
+      medicalData["instructions"] = line.split(":").last.trim();
     }
 
-    // Extract Medicine Names
+    // Medication Extraction (original working logic)
     if (line.startsWith("TAB.") || line.startsWith("CAP.")) {
       medicineNames.add(line.replaceFirst(RegExp(r"(TAB\.|CAP\.)\s*"), "").trim());
     }
-
-    // Extract Dosages
     else if (dosageRegex.hasMatch(line)) {
-      dosages.add(line);
+      dosages.add(line.trim());
     }
-
-    // Extract Durations
     else if (durationRegex.hasMatch(line)) {
-      durations.add(line);
+      durations.add(line.trim());
     }
   }
 
-  // Link medications with their dosage and duration
+  // Combine medications using original logic with null safety
   for (int i = 0; i < medicineNames.length; i++) {
-    medications.add({
+    medicalData["medications"].add({
       "name": medicineNames[i],
       "dosage": i < dosages.length ? dosages[i] : "",
       "duration": i < durations.length ? durations[i] : "",
     });
   }
 
-  return {
-    "doctor_name": doctorName,
-    "contact": contact,
-    "diagnosis": diagnosis,
-    "follow_up_date": followUpDate,
-    "instructions": instructions,
-    "medications": medications,
-  };
-  }
-
-  /// 📌 Save Data (Check-Up or Medical)
-Future<void> saveData(File image, BuildContext context) async {
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
-
-  String extractedText = await extractText(image);
-  String base64Image = await convertImageToBase64(image);
-  String userEmail = user.email ?? "unknown_user";
-
-  bool isCheckup = isCheckupRecord(extractedText);
-
-  if (isCheckup) {
-    // 🔹 Extract Check-Up Data
-    Map<String, dynamic> checkupData = extractCheckupDetails(extractedText);
-    checkupData['imageBase64'] = base64Image;
-    checkupData['email'] = userEmail;
-    checkupData['timestamp'] = Timestamp.now();
-
-    // 🔹 Ask User for Next Check-Up Date
-    DateTime? nextCheckup = await askUserForNextCheckupDate(context);
-    if (nextCheckup != null) {
-      checkupData['next_checkup_date'] = nextCheckup.toIso8601String();
-      NotificationService.scheduleNotification(
-        500,  // Unique ID for check-up reminder
-        "Check-Up Reminder",
-        "You scheduled a check-up on ${DateFormat("dd MMM yyyy").format(nextCheckup)}",
-        nextCheckup,
-      );
-    }
-
-    // 🔹 Store as a New Document in `checkup_records` Collection
-    await FirebaseFirestore.instance.collection('checkup_records').add(checkupData);
-  } else {
-    // 🔹 Extract Medical Record Data
-    Map<String, dynamic> medicalData = extractMedicalRecord(extractedText);
-    medicalData['imageBase64'] = base64Image;
-    medicalData['email'] = userEmail;
-    medicalData['timestamp'] = Timestamp.now();
-
-    // 🔹 Store as a New Document in `medical_records` Collection
-    await FirebaseFirestore.instance.collection('medical_records').add(medicalData);
-
-    // 🔹 Schedule Medication Reminders
-    List medications = medicalData["medications"];
-    for (var med in medications) {
-      DateTime reminderTime = DateTime.now().add(Duration(hours: 1)); // Example: 1 hour later
-      NotificationService.scheduleNotification(
-        medications.indexOf(med),
-        "Time to take ${med["name"]}",
-        "Dosage: ${med["dosage"]}",
-        reminderTime,
-      );
-    }
-
-    // 🔹 If you still need `setReminders(medicalData)`, make sure it doesn’t duplicate notifications.
-    setReminders(medicalData);
-  }
+  // Add the type field for Firebase structure
+  return medicalData;
 }
+  Future<void> saveData(File image, BuildContext context) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-void setReminders(Map<String, dynamic> extractedData) {
-  List<Map<String, String>> medications = List<Map<String, String>>.from(extractedData['medications']);
-  DateTime now = DateTime.now();
-
-  for (var med in medications) {
-    String medName = med['name'] ?? "Unknown Medicine";
-    String dosage = med['dosage'] ?? "";
-    String durationStr = med['duration'] ?? "1 Days";
-    
-    int durationDays = int.tryParse(RegExp(r"\d+").firstMatch(durationStr)?.group(0) ?? "1") ?? 1;
-
-    for (int i = 0; i < durationDays; i++) {
-      DateTime reminderTime = now.add(Duration(days: i, hours: 9)); // Morning 9 AM
-
-      int uniqueId = medName.hashCode + i; // ✅ Unique ID based on name + day
-      NotificationService.scheduleNotification(
-        uniqueId,
-        "Time to take $medName",
-        "Dosage: $dosage",
-        reminderTime,
-      );
-    }
-  }
-}
-
-
-  /// 📌 Ask User to Choose Next Check-Up Date
-Future<DateTime?> askUserForNextCheckupDate(BuildContext context) async {
-  DateTime? selectedDate = await showDatePicker(
-    context: context,
-    initialDate: DateTime.now(),
-    firstDate: DateTime.now(),
-    lastDate: DateTime.now().add(Duration(days: 365)), // Limit to 1 year
-  );
-  return selectedDate;
-}
-
-  DateTime? parseDate(String dateStr) {
     try {
-      return DateFormat("dd-MM-yyyy").parse(dateStr);
-    } catch (e) {
-      print("❌ Invalid date format: $dateStr");
-      return null;
-    }
-  }
- void _scheduleDailyReminder(int id, String medName, String dosage, DateTime startTime, int days) {
-  for (int i = 0; i < days; i++) {
-    DateTime reminderTime = startTime.add(Duration(days: i));
-    
-    if (reminderTime.isAfter(DateTime.now())) {
-      print("⏰ Scheduling Reminder: Take $medName - $dosage at ${DateFormat("hh:mm a").format(reminderTime)}");
+      String extractedText = await extractText(image);
+      String base64Image = await convertImageToBase64(image);
+      bool isCheckup = isCheckupRecord(extractedText);
+
+      Map<String, dynamic> data = isCheckup 
+          ? extractCheckupDetails(extractedText)
+          : extractMedicalRecord(extractedText);
+
+      data.addAll({
+        "type": isCheckup ? "checkup" : "medical",
+         'timestamp': FieldValue.serverTimestamp(), 
+        "email": user.email,
+        "imageBase64": base64Image,
       
-      NotificationService.scheduleNotification(
-        id + i,  // Unique ID for each reminder
-        "Time to take $medName",
-        "Dosage: $dosage",
-        reminderTime,
+      });
+
+      String collection = isCheckup ? "checkup_records" : "medical_record";
+       DocumentReference docRef = await FirebaseFirestore.instance
+          .collection(collection)
+          .add(data);
+
+
+      // Schedule notifications
+      if (isCheckup) {
+
+        DateTime? nextDate = await askUserForNextCheckupDate(context);
+        if (nextDate != null) {
+          await docRef.update({
+            "next_checkup_date": nextDate.toIso8601String()
+          });
+          
+          NotificationService.scheduleNotification(
+            nextDate.hashCode,
+            "Check-Up Reminder",
+            "Your next check-up is on ${DateFormat("dd MMM yyyy").format(nextDate)}",
+            nextDate,
+          );
+        }
+      } else {
+        setReminders(data);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${isCheckup ? 'Checkup' : 'Medical'} record saved successfully!"))
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error saving record: ${e.toString()}"))
       );
     }
   }
-}
+
+  Future<DateTime?> askUserForNextCheckupDate(BuildContext context) async {
+    return await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+    );
+  }
+
+  void setReminders(Map<String, dynamic> medicalData) {
+    List<Map<String, dynamic>> meds = List.from(medicalData["medications"]);
+    DateTime now = DateTime.now();
+    
+    for (var med in meds) {
+      String name = med["name"] ?? "Unknown Medication";
+      String dosage = med["dosage"] ?? "";
+      String duration = med["duration"] ?? "7 Days";
+      
+      int days =  int.tryParse(RegExp(r'\d+').firstMatch(duration)?.group(0) ?? '7') ?? 7;
+      
+      for (int i = 0; i < days; i++) {
+        NotificationService.scheduleNotification(
+          name.hashCode + i,
+          "Medication Reminder",
+          "Time to take $name - $dosage",
+          now.add(Duration(days: i, hours: 9)),
+        );
+      }
+    }
+  }
 }

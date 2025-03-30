@@ -201,7 +201,7 @@ if ((averagedScores["hobbies_selfcare"] ?? 0) <= 1.5 && hobbies.isNotEmpty) {  /
   recommendations.add({
     "icon": "🎨",
     "text":
-        "It's been a while since you engaged in **${hobbies.join(", ")}**. Try making time for them!"
+        "It's been a while since you engaged in ""${hobbies.join(", ")}"". Try making time for them!"
   });
 }
 
@@ -219,7 +219,7 @@ if (totalAverageScore >= 6.0 && closeContacts.isNotEmpty) {  // Adjusted for tot
   recommendations.add({
     "icon": "💙",
     "text":
-        "Consider reaching out to **${closeContacts.first}** for support. Talking to a trusted person can help!"
+        "Consider reaching out to ""${closeContacts.first}"" for support. Talking to a trusted person can help!"
   });
 }
 
